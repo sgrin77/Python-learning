@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lucas's Python Game Lab</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🎮</span>
+      <h1>Lucas's Python Game Lab</h1>
+    </div>
+    <nav class="topnav">
+      <button id="nav-learn" class="nav-btn active">Learn</button>
+      <button id="nav-progress" class="nav-btn">My Progress</button>
+      <a class="nav-btn" href="parent.html" target="_blank" rel="noopener">Parent View</a>
+    </nav>
+    <div class="streak">
+      <span id="streak-flame">🔥</span>
+      <span id="streak-count">0</span>
+      <small>day streak</small>
+    </div>
+  </header>
+
+  <main>
+    <!-- LEARN VIEW -->
+    <section id="view-learn" class="view active">
+      <aside class="lesson-list">
+        <h2>Lessons</h2>
+        <ol id="lesson-index"></ol>
+      </aside>
+
+      <section class="lesson-pane">
+        <article id="lesson-content">
+          <h2>Loading lesson…</h2>
+        </article>
+
+        <div class="editor-wrap">
+          <div class="editor-header">
+            <span>code.py</span>
+            <div class="editor-buttons">
+              <button id="btn-reset" title="Reset starter code">↺ Reset</button>
+              <button id="btn-run" class="primary">▶ Run</button>
+            </div>
+          </div>
+          <textarea id="editor" spellcheck="false" autocomplete="off"></textarea>
+          <div class="output-header">
+            <span>Output</span>
+            <button id="btn-clear" title="Clear output">Clear</button>
+          </div>
+          <pre id="output" aria-live="polite">Click "Run" to try your code!</pre>
+          <div id="canvas-wrap" hidden>
+            <div class="output-header">
+              <span>Game Window</span>
+            </div>
+            <canvas id="game-canvas" width="400" height="300"></canvas>
+          </div>
+        </div>
+
+        <div class="lesson-footer">
+          <button id="btn-prev">◀ Previous</button>
+          <button id="btn-complete" class="primary">I finished this lesson! ✓</button>
+          <button id="btn-next">Next ▶</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- PROGRESS VIEW -->
+    <section id="view-progress" class="view">
+      <h2>My Progress 🚀</h2>
+      <div class="progress-grid">
+        <div class="card">
+          <h3>This week</h3>
+          <p class="big-stat"><span id="sessions-this-week">0</span> / 3 sessions</p>
+          <div class="progress-bar"><div id="week-bar" class="progress-fill"></div></div>
+          <p id="week-message"></p>
+        </div>
+        <div class="card">
+          <h3>Streak</h3>
+          <p class="big-stat">🔥 <span id="streak-count-2">0</span> days</p>
+          <p>Keep it going!</p>
+        </div>
+        <div class="card">
+          <h3>Lessons done</h3>
+          <p class="big-stat"><span id="lessons-done">0</span> / <span id="lessons-total">0</span></p>
+        </div>
+        <div class="card">
+          <h3>Total coding time</h3>
+          <p class="big-stat"><span id="total-time">0</span> min</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Calendar (last 8 weeks)</h3>
+        <div id="calendar"></div>
+        <p class="legend"><span class="dot dot-empty"></span> No session <span class="dot dot-some"></span> Coded <span class="dot dot-goal"></span> Hit weekly goal day</p>
+      </div>
+
+      <div class="card">
+        <h3>Recent sessions</h3>
+        <ul id="session-log"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottombar">
+    <small>Made with ❤️ for Lucas. Tip: run code often and don't be afraid of red errors — they're how we learn!</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+  <script src="js/lessons.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="js/runner.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

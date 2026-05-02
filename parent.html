@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parent View — Lucas's Python Game Lab</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">📊</span>
+      <h1>Parent Dashboard</h1>
+    </div>
+    <nav class="topnav">
+      <a class="nav-btn" href="index.html">← Back to Lucas's lab</a>
+    </nav>
+  </header>
+
+  <main class="parent-main">
+    <section class="card">
+      <h2>Settings</h2>
+      <label>
+        Parent email
+        <input id="parent-email" type="email" placeholder="parent@example.com" />
+      </label>
+      <label>
+        Weekly session goal
+        <input id="weekly-goal" type="number" min="1" max="7" value="3" />
+      </label>
+      <button id="btn-save-settings" class="primary">Save</button>
+      <p class="muted">Saved on this browser only (no account needed).</p>
+    </section>
+
+    <section class="card">
+      <h2>This week</h2>
+      <p class="big-stat"><span id="sessions-this-week">0</span> / <span id="goal-display">3</span> sessions</p>
+      <div class="progress-bar"><div id="week-bar" class="progress-fill"></div></div>
+      <p id="week-status"></p>
+    </section>
+
+    <section class="card">
+      <h2>Overall</h2>
+      <ul class="stat-list">
+        <li>🔥 Current streak: <strong><span id="streak-count">0</span> days</strong></li>
+        <li>📚 Lessons completed: <strong><span id="lessons-done">0</span> / <span id="lessons-total">0</span></strong></li>
+        <li>⏱️ Total coding time: <strong><span id="total-time">0</span> min</strong></li>
+        <li>📅 First session: <strong id="first-session">—</strong></li>
+        <li>📅 Last session: <strong id="last-session">—</strong></li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Calendar (last 12 weeks)</h2>
+      <div id="calendar"></div>
+    </section>
+
+    <section class="card">
+      <h2>Session log</h2>
+      <table class="log-table">
+        <thead><tr><th>Date</th><th>Lesson</th><th>Time</th></tr></thead>
+        <tbody id="session-log"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Send me an update</h2>
+      <p>Generate a weekly summary and email it to yourself in one click.</p>
+      <textarea id="summary-preview" rows="14" readonly></textarea>
+      <div class="row">
+        <button id="btn-refresh-summary">Refresh summary</button>
+        <button id="btn-email-summary" class="primary">📧 Email summary</button>
+        <button id="btn-copy-summary">📋 Copy</button>
+        <button id="btn-download-summary">⬇️ Download .txt</button>
+      </div>
+      <p class="muted">For automatic weekly emails, see the README — you can set this up to run every Sunday with a free service.</p>
+    </section>
+
+    <section class="card danger">
+      <h2>Reset progress</h2>
+      <p>This will erase Lucas's session history on this browser. There's no undo.</p>
+      <button id="btn-reset-progress">Reset all progress</button>
+    </section>
+  </main>
+
+  <script src="js/lessons.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="js/parent.js"></script>
+</body>
+</html>
