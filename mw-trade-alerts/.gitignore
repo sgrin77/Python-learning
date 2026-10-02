@@ -1,0 +1,9 @@
+config.toml
+state.json
+state.tmp
+tracker.log
+debug/
+browser-profile/
+__pycache__/
+.pytest_cache/
+.venv/

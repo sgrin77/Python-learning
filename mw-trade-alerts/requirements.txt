@@ -1,0 +1,6 @@
+requests>=2.28
+beautifulsoup4>=4.11
+tomli>=2.0; python_version < "3.11"
+tzdata; sys_platform == "win32"
+# Optional, only for [fetch] method = "browser":
+#   pip install playwright && python -m playwright install chromium
