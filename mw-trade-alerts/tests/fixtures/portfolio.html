@@ -1,0 +1,43 @@
+<!doctype html>
+<html><body>
+<!-- Trimmed-down copy of the MarketWatch game portfolio page structure -->
+<div class="element element--profile">
+  <ul class="list list--kv">
+    <li class="kv__item"><small class="label">Net Worth</small><span class="primary">$100,000.00</span></li>
+    <li class="kv__item"><small class="label">Overall Gains</small><span class="primary">0.00%</span></li>
+  </ul>
+</div>
+<a href="/games/demo-game/download?view=holdings&amp;pub=PUB123&amp;isDownload=true">Download holdings</a>
+<a href="/games/demo-game/download?view=transactions&amp;pub=&amp;isDownload=true">Download transactions</a>
+<a href="/games/demo-game/transactions?pub=PUB123">Transactions</a>
+
+<mw-table-dropdown>
+<table class="table table--primary">
+  <thead><tr><th></th><th>Symbol</th><th>Holding</th><th>Price</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr class="table__row">
+      <td></td>
+      <td><a class="primary" href="#"><mini-quote>AAPL</mini-quote></a><div class="secondary"><small>200 Shares</small></div></td>
+      <td><div class="primary">32%</div><div class="secondary">
+        Buy
+      </div></td>
+      <td><div class="primary">$160.25</div></td>
+      <td><div class="primary">$32,050.00</div></td>
+    </tr>
+    <tr class="table__row">
+      <td></td>
+      <td><a class="primary" href="#"><mini-quote>TSLA</mini-quote></a><div class="secondary"><small>50 Shares</small></div></td>
+      <td><div class="primary">10%</div><div class="secondary">Short</div></td>
+      <td><div class="primary">$210.00</div></td>
+      <td><div class="primary">-$10,500.00</div></td>
+    </tr>
+  </tbody>
+</table>
+</mw-table-dropdown>
+
+<table class="table table--primary table--condensed no-margin">
+  <tr><th>Symbol</th><th>Shares</th><th>Type</th><th>Price</th></tr>
+  <tr data-order="9001"><td class="ticker">NVDA</td><td class="shares">25</td><td class="type">Buy: Limit</td><td class="price">$110.00</td></tr>
+  <tr data-order="9002"><td class="ticker">AAPL</td><td class="shares">100</td><td class="type">Sell: Stop</td><td class="price">$150.00</td></tr>
+</table>
+</body></html>
