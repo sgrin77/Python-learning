@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Keeper &amp; Striker Log</title>
+  <meta name="description" content="Log games as goalkeeper or striker, track mistakes, saves and shots, and train with drills that target what needs work." />
+  <meta name="theme-color" content="#16472F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Soccer Log" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div class="statusbar" aria-hidden="true"></div>
+  <div class="wrap"><main id="view"><noscript><p>This app needs JavaScript turned on.</p></noscript></main></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden />
+  <nav class="tabs" aria-label="Sections"><div class="tabs-in">
+    <button class="tab" data-a="go" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+    <button class="tab" data-a="go" data-v="games"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8l3 2.2-1.1 3.5h-3.8L9 10.2zM12 8V3.2M15 10.2l4.3-1.4M13.9 13.7l2.6 3.7M10.1 13.7l-2.6 3.7M9 10.2L4.7 8.8"/></svg>Games</button>
+    <button class="tab" data-a="go" data-v="train"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 4h5l4 15h-13zM3 20h18M7.6 12.5h8.8"/></svg>Train</button>
+    <button class="tab" data-a="go" data-v="board"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="1.5"/><path d="M4 12h16"/><circle cx="12" cy="12" r="3"/><path d="M8.5 2.5v3h7v-3M8.5 21.5v-3h7v3"/></svg>Board</button>
+    <button class="tab" data-a="go" data-v="progress"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M10.5 20V5M16 20v-7M21 20H3"/></svg>Progress</button>
+  </div></nav>
+  <script src="plays.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
