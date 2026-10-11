@@ -263,7 +263,7 @@ textarea{min-height:76px;resize:vertical}
 
 /* Tab bar and toast */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.tabs-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 10px;background:none;border:0;color:var(--muted);font-size:.76rem;font-weight:700}
 .tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--accent)}
@@ -276,3 +276,52 @@ textarea{min-height:76px;resize:vertical}
 .welcome{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
 .backup-row{display:flex;gap:10px;flex-wrap:wrap}
 .backup-row .btn{flex:1 1 160px}
+
+/* Board */
+:root{--tok-us:#2B57D6;--tok-gk:#E8772E;--tok-them:#D23F33;--tok-ink:#FFFFFF;--gold:#FFD43B}
+.field{width:100%;height:auto;display:block;border-radius:12px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.field.edit{touch-action:none;cursor:crosshair}
+.field .t1{fill:var(--turf)} .field .t2{fill:var(--turf-2)}
+.field .chalk{fill:none;stroke:var(--chalk);stroke-width:.35}
+.field .spot circle{fill:var(--chalk)}
+.field .goalbox{fill:none;stroke:var(--chalk);stroke-width:.45}
+.field .hit,.field .hitp{fill:#000;fill-opacity:0}
+.field .hitp{fill:none;stroke:#000;stroke-opacity:0;stroke-width:3.5}
+.field .body{stroke:var(--tok-ink);stroke-width:.35}
+.field .body.us{fill:var(--tok-us)} .field .body.gk{fill:var(--tok-gk)} .field .body.them{fill:var(--tok-them)}
+.field .lab{fill:var(--tok-ink);font-family:var(--f-display);font-weight:700;pointer-events:none}
+.field .hi{fill:none;stroke:var(--gold);stroke-width:.6}
+.field .ballc{fill:#FFFFFF;stroke:#1A1A1A;stroke-width:.25}
+.field .ballp{fill:#1A1A1A}
+.field .cone{fill:#F08A24;stroke:#7A3A00;stroke-width:.2}
+.field .selring{fill:none;stroke:var(--gold);stroke-width:.4;stroke-dasharray:.9 .6}
+.field .handle .hd{fill:var(--gold);stroke:#1A1A1A;stroke-width:.25}
+.field .handle.mid .hd{fill:#FFFFFF}
+.arr{fill:none;stroke:var(--chalk);stroke-width:.5;stroke-linecap:round;stroke-linejoin:round}
+.arr.run{stroke-dasharray:1.3 .9}
+.arr.shot{stroke:var(--gold);stroke-width:.75}
+.arr.draft{opacity:.75}
+.ah{fill:var(--chalk)} .ah.shot{fill:var(--gold)}
+.arrow.sel .arr{stroke:var(--gold)} .arrow.sel .ah{fill:var(--gold)}
+.arrow-legend span{display:inline-flex;align-items:center}
+.lgarr{width:44px;height:15px;margin-right:6px;border-radius:3px}
+.lgarr .t1{fill:var(--turf)}
+.player{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stepcount{font-family:var(--f-display);font-weight:700;font-size:1.1rem;letter-spacing:.03em;text-transform:uppercase;margin-inline:auto}
+.player .btn.primary{min-width:76px}
+.caption{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-height:72px;font-size:1.05rem;max-width:65ch}
+.playcard{flex-direction:row;align-items:flex-start;gap:12px}
+.playcard .field.thumb{width:96px;flex:none;border-radius:8px}
+.pc-text{display:flex;flex-direction:column;gap:4px;min-width:0}
+.title-input{font-family:var(--f-display);font-size:1.5rem!important;font-weight:700;text-transform:uppercase}
+.seg.tools button{font-size:.9rem;padding-inline:2px}
+.selpanel{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.selpanel .lbl2{flex-basis:100%}
+.selpanel .field.sm{width:80px}
+.mini.on-gold{background:var(--gold);border-color:var(--gold);color:#1A1A1A}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.addrow .lbl2{margin-right:2px}
+.steps-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stepchip{min-width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-family:var(--f-display);font-weight:700;font-size:1.15rem}
+.stepchip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.row .go{color:var(--accent);font-size:1.5rem;line-height:1}

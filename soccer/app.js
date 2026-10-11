@@ -129,9 +129,10 @@ const RATE_NAME={effort:'Effort',confidence:'Confidence',overall:'Overall'};
 const COMPS=['League','Cup','Tournament','Friendly','Scrimmage'];
 const SHOT_RES=[{id:'goal',label:'Goal'},{id:'on',label:'Saved'},{id:'off',label:'Missed'},{id:'blocked',label:'Blocked'}];
 const K_GAME='ksl:gameDraft', K_SESS='ksl:sessionDraft';
+const K_BOARD='ksl:boardDraft';
 const K_DATA='ksl:data:v1', K_BACKUP='ksl:lastBackup', K_SNOOZE='ksl:backupSnooze', K_NOINSTALL='ksl:hideInstall';
 const NO_DB='This browser is blocking storage, so nothing can be saved. Turn off Private Browsing, or open the app from your home screen.';
-const FORM_VIEWS=new Set(['gameform','sessionform','player']);
+const FORM_VIEWS=new Set(['gameform','sessionform','player','boardedit']);
 const IS_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const IS_INSTALLED=window.navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
 
@@ -140,7 +141,8 @@ const S={db:null,checked:false,canWrite:false,
   profile:defaultProfile(),
   games:[],sessions:[],gotGames:false,gotSessions:false,
   view:'home',arg:null,gd:null,gEdit:null,gResumed:false,sd:null,sEdit:null,sResumed:false,pf:null,
-  drillPos:'all',allSess:false,pendingImport:null};
+  drillPos:'all',allSess:false,pendingImport:null,
+  boards:[],gotBoards:false,bd:null,bEdit:null,bStep:0,bTool:'move',bSel:null,bHist:[],drag:null,dragSnap:null,playing:false,playPos:'all'};
 
 /* ---------- Helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -555,9 +557,305 @@ function backupDue(){
   return now-lb>30*864e5&&now-sz>14*864e5;
 }
 
+/* ---------- Tactics board ----------
+   Field coordinates are meters: x 0-68 left to right, y 0-105 top to bottom.
+   Our team attacks up, toward y = 0. A board has tokens (players, ball,
+   cones) and steps; each step stores where every token stands plus the
+   arrows that show what happens next. */
+const PLAYS=window.KSL_PLAYS||[];
+const PLAY=Object.fromEntries(PLAYS.map(p=>[p.id,p]));
+const VIEWBOX={full:'-3 -4 74 113',attack:'-3 -4 74 60',defend:'-3 49 74 60'};
+const VIEW_NAME={full:'Full field',attack:'Attack half',defend:'Defend half'};
+const VIEW_CENTER={full:[34,52.5],attack:[34,30],defend:[34,78]};
+const TOOLS=[['move','Move'],['run','Run'],['pass','Pass'],['dribble','Dribble'],['shot','Shot']];
+const KIND_NAME={run:'Run',pass:'Pass',dribble:'Dribble',shot:'Shot'};
+const ADDABLE=[['us','Teammate'],['gk','Keeper'],['them','Opponent'],['ball','Ball'],['cone','Cone']];
+const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const f1=v=>Math.round(v*100)/100;
+const r1=v=>Math.round(v*10)/10;
+const dist=(p,q)=>Math.hypot(p[0]-q[0],p[1]-q[1]);
+const clampPt=p=>[r1(clamp(p[0],-2,70)),r1(clamp(p[1],-3,108))];
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function ctrlOf(ar){return ar.c||[(ar.a[0]+ar.b[0])/2,(ar.a[1]+ar.b[1])/2];}
+function qpt(a,c,b,t){const u=1-t;return [u*u*a[0]+2*u*t*c[0]+t*t*b[0],u*u*a[1]+2*u*t*c[1]+t*t*b[1]];}
+function boardFor(arg){if(arg&&String(arg).indexOf('lib:')===0)return PLAY[String(arg).slice(4)]||null;return S.boards.find(b=>b.id===arg)||null;}
+const FIELD_LINES=(()=>{
+  let s='<rect x="-3" y="-4" width="74" height="113" class="t2"/>';
+  for(let i=0;i<14;i++)s+=`<rect x="0" y="${i*7.5}" width="68" height="7.5" class="${i%2?'t2':'t1'}"/>`;
+  s+='<g class="chalk"><rect x="0" y="0" width="68" height="105"/><path d="M0 52.5H68"/><circle cx="34" cy="52.5" r="9.15"/>'+
+    '<path d="M13.84 0V16.5H54.16V0M24.84 0V5.5H43.16V0M26.69 16.5A9.15 9.15 0 0 0 41.31 16.5"/>'+
+    '<path d="M13.84 105V88.5H54.16V105M24.84 105V99.5H43.16V105M26.69 88.5A9.15 9.15 0 0 1 41.31 88.5"/>'+
+    '<path d="M1 0A1 1 0 0 1 0 1M67 0A1 1 0 0 0 68 1M0 104A1 1 0 0 1 1 105M68 104A1 1 0 0 0 67 105"/></g>'+
+    '<g class="spot"><circle cx="34" cy="52.5" r=".4"/><circle cx="34" cy="11" r=".4"/><circle cx="34" cy="94" r=".4"/></g>'+
+    '<rect class="goalbox" x="30.34" y="-2" width="7.32" height="2"/><rect class="goalbox" x="30.34" y="105" width="7.32" height="2"/>';
+  return s;
+})();
+function wavyPath(a,c,b){
+  const len=dist(a,c)+dist(c,b),n=Math.max(6,Math.round(len/0.55));let d='';
+  for(let i=0;i<=n;i++){
+    const t=i/n,p=qpt(a,c,b,t),u=1-t;
+    let tx=2*u*(c[0]-a[0])+2*t*(b[0]-c[0]),ty=2*u*(c[1]-a[1])+2*t*(b[1]-c[1]);const L=Math.hypot(tx,ty)||1;
+    const w=(i<2||i>n-3)?0:0.55*Math.sin(i*Math.PI/2);
+    d+=(i?'L':'M')+f1(p[0]-ty/L*w)+' '+f1(p[1]+tx/L*w);
+  }
+  return d;
+}
+function arrowShape(ar){
+  const a=ar.a,b=ar.b,c=ctrlOf(ar);
+  const line=ar.kind==='dribble'?wavyPath(a,c,b):`M${f1(a[0])} ${f1(a[1])}Q${f1(c[0])} ${f1(c[1])} ${f1(b[0])} ${f1(b[1])}`;
+  let dx=b[0]-c[0],dy=b[1]-c[1];if(Math.hypot(dx,dy)<.01){dx=b[0]-a[0];dy=b[1]-a[1];}
+  const L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,hl=ar.kind==='shot'?2:1.6,hw=ar.kind==='shot'?1:.8,bx=b[0]-ux*hl,by=b[1]-uy*hl;
+  return {line,hit:`M${f1(a[0])} ${f1(a[1])}Q${f1(c[0])} ${f1(c[1])} ${f1(b[0])} ${f1(b[1])}`,head:`M${f1(b[0])} ${f1(b[1])}L${f1(bx-uy*hw)} ${f1(by+ux*hw)}L${f1(bx+uy*hw)} ${f1(by-ux*hw)}Z`};
+}
+function arrowsSVG(arrows,o){
+  return arrows.map((ar,i)=>{const s=arrowShape(ar),sel=o.edit&&o.sel&&o.sel.kind==='arr'&&o.sel.i===i;
+    return `<g class="arrow${sel?' sel':''}" data-arrow="${i}">${o.edit?`<path class="hitp" d="${s.hit}"/>`:''}<path class="arr ${ar.kind}" d="${s.line}"/><path class="ah ${ar.kind}" d="${s.head}"/></g>`;}).join('');
+}
+function handlesSVG(arrows,o){
+  if(!o.edit||!o.sel||o.sel.kind!=='arr'||!arrows[o.sel.i])return '';
+  const ar=arrows[o.sel.i],m=qpt(ar.a,ctrlOf(ar),ar.b,.5),i=o.sel.i;
+  return [['a',ar.a],['b',ar.b],['c',m]].map(([h,p])=>`<g class="handle${h==='c'?' mid':''}" data-handle="${h}" data-i="${i}" transform="translate(${f1(p[0])} ${f1(p[1])})"><circle class="hit" r="3.2"/><circle class="hd" r="${h==='c'?1.3:1}"/></g>`).join('');
+}
+function tokenSVG(t,p,o){
+  if(!p)return '';
+  const sel=o.edit&&o.sel&&o.sel.kind==='tok'&&o.sel.id===t.id,lab=String(t.label||'');
+  let g;
+  if(t.type==='ball')g='<circle class="hit" r="2.8"/><circle class="ballc" r="1.1"/><path class="ballp" d="M0 -.45L.43 -.14L.27 .36H-.27L-.43 -.14Z"/>';
+  else if(t.type==='cone')g='<circle class="hit" r="2.8"/><path class="cone" d="M0 -1.5L1.3 1H-1.3Z"/>';
+  else g=`<circle class="hit" r="3.4"/>${t.hi?'<circle class="hi" r="2.9"/>':''}<circle class="body ${t.type}" r="${TOKEN_R}"/><text class="lab" text-anchor="middle" dominant-baseline="central" font-size="${lab.length>2?1.5:lab.length>1?1.9:2.3}">${esc(lab)}</text>`;
+  if(sel)g+=`<circle class="selring" r="${t.type==='ball'||t.type==='cone'?2.2:3.5}"/>`;
+  return `<g class="tok" data-tok="${esc(t.id)}" transform="translate(${f1(p[0])} ${f1(p[1])})">${g}</g>`;
+}
+const TOKEN_R=2.1,BALL_GAP=3.25;
+/* Where to draw each token: a ball that overlaps a player is shown just
+   touching his edge, so it never hides his number. */
+function displayPos(b,st){
+  const pos=Object.assign({},st.pos);
+  const players=b.tokens.filter(t=>(t.type==='us'||t.type==='gk'||t.type==='them')&&st.pos[t.id]);
+  b.tokens.forEach(t=>{
+    if(t.type!=='ball'||!pos[t.id])return;
+    const p=pos[t.id];let near=null,nd=1e9;
+    players.forEach(pl=>{const d=dist(p,st.pos[pl.id]);if(d<nd){nd=d;near=st.pos[pl.id];}});
+    if(near&&nd<BALL_GAP){let dx=p[0]-near[0],dy=p[1]-near[1],L=Math.hypot(dx,dy);if(L<.01){dx=0;dy=1;L=1;}pos[t.id]=[r1(near[0]+dx/L*BALL_GAP),r1(near[1]+dy/L*BALL_GAP)];}
+  });
+  return pos;
+}
+function fieldSVG(b,step,o){
+  o=o||{};const st=b.steps[step]||b.steps[0],dp=displayPos(b,st);
+  return `<svg class="field${o.edit?' edit':''}${o.thumb?' thumb':''}" ${o.edit?'data-board="1"':''} viewBox="${VIEWBOX[b.view]||VIEWBOX.full}" ${o.thumb?'aria-hidden="true"':`role="img" aria-label="${esc(b.title||'Soccer field')}, step ${step+1}"`}>${FIELD_LINES}<g class="arrows">${arrowsSVG(st.arrows||[],o)}</g><g class="toks">${b.tokens.map(t=>tokenSVG(t,dp[t.id],o)).join('')}</g><g class="handles">${handlesSVG(st.arrows||[],o)}</g>${o.edit?'<path class="arr draft" id="drawPath" d=""/>':''}</svg>`;
+}
+function arrowLegend(){
+  return `<div class="legend arrow-legend">${[['pass','Pass'],['run','Run'],['dribble','Dribble'],['shot','Shot']].map(([k,l])=>{const s=arrowShape({kind:k,a:[1,2],b:[11,2]});return `<span><svg class="lgarr" viewBox="0 0 12 4" aria-hidden="true"><rect width="12" height="4" rx="1" class="t1"/><path class="arr ${k}" d="${s.line}"/><path class="ah ${k}" d="${s.head}"/></svg>${l}</span>`;}).join('')}</div>`;
+}
+function boardTemplate(kind){
+  if(kind==='lineup'){
+    const L=[['gk','GK',34,100.5],['us','2',54,87],['us','4',34,89],['us','3',14,87],['us','6',24,73],['us','8',44,73],['us','7',56,60],['us','9',34,58],['us','11',12,60],['ball','',34,52.5]];
+    const hiLabel=S.profile.preferred==='st'?'9':'GK';
+    return {title:'Our 9v9 lineup',view:'full',tokens:L.map((x,i)=>({id:'t'+(i+1),type:x[0],label:x[1],hi:x[1]===hiLabel})),steps:[{caption:'',pos:Object.fromEntries(L.map((x,i)=>['t'+(i+1),[x[2],x[3]]])),arrows:[]}]};
+  }
+  return {title:'',view:'full',tokens:[{id:'t1',type:'ball',label:''}],steps:[{caption:'',pos:{t1:[34,52.5]},arrows:[]}]};
+}
+function libToDraft(p){const d=clone({title:p.title,view:p.view,tokens:p.tokens,steps:p.steps});d.steps.forEach(s=>{s.arrows=s.arrows||[];s.caption=s.caption||'';});return d;}
+function curStep(){return S.bd.steps[S.bStep];}
+function pushHist(){S.bHist.push(JSON.stringify(S.bd));if(S.bHist.length>60)S.bHist.shift();}
+function nextLabel(type){
+  if(type==='ball'||type==='cone')return '';if(type==='gk')return 'GK';
+  const used=new Set(S.bd.tokens.filter(t=>t.type===type).map(t=>String(t.label)));
+  for(const n of [2,3,4,5,6,7,8,9,10,11,1,12,13,14,15])if(!used.has(String(n)))return String(n);
+  return '';
+}
+/* When a step is added, move each token along the arrow that starts at it. */
+function advancePositions(st){
+  const pos=clone(st.pos),moved=new Set();
+  const near=(p,types,max)=>S.bd.tokens.filter(t=>types.indexOf(t.type)>=0&&st.pos[t.id]&&!moved.has(t.id)).map(t=>({t,d:dist(st.pos[t.id],p)})).filter(x=>x.d<=max).sort((x,y)=>x.d-y.d)[0];
+  (st.arrows||[]).forEach(ar=>{
+    if(ar.kind==='pass'||ar.kind==='shot'){const hit=near(ar.a,['ball'],3);if(hit){pos[hit.t.id]=ar.b.slice();moved.add(hit.t.id);}return;}
+    const pl=near(ar.a,['us','gk','them'],3.5);
+    if(pl){pos[pl.t.id]=ar.b.slice();moved.add(pl.t.id);}
+    if(ar.kind==='dribble'){const ball=near(ar.a,['ball'],3.5);if(ball){const p0=st.pos[ball.t.id];pos[ball.t.id]=clampPt([ar.b[0]+(p0[0]-ar.a[0]),ar.b[1]+(p0[1]-ar.a[1])]);moved.add(ball.t.id);}}
+  });
+  return pos;
+}
+
+function renderBoardList(){
+  let h='<div class="bar"><h1>Board</h1></div><p class="muted">Put players on the field, draw runs and passes, and step through a move together.</p>';
+  const dr=lsGet(K_BOARD);
+  if(dr&&dr.d&&!dr.edit)h+=`<div class="note"><span>You have an unsaved board${dr.d.title?': <b>'+esc(dr.d.title)+'</b>':''}.</span><button class="btn small" data-a="bResume">Keep editing</button></div>`;
+  if(S.canWrite)h+='<div class="actions"><button class="btn primary big" data-a="bNew" data-v="blank">New board<small>Empty field</small></button><button class="btn big" data-a="bNew" data-v="lineup">Team lineup<small>9v9 in a 3-2-3</small></button></div>';
+  const list=PLAYS.filter(p=>S.playPos==='all'||p.pos===S.playPos);
+  h+=`<section class="block"><div class="block-head"><h2>Moves to learn</h2><span class="sub">Tap one, then press Play</span></div>
+  <div class="seg" role="group" aria-label="Filter moves">${[['all','All'],['gk','Keeper'],['st','Striker']].map(([v,l])=>`<button type="button" data-a="playPos" data-v="${v}" class="${S.playPos===v?'on':''}" aria-pressed="${S.playPos===v}">${l}</button>`).join('')}</div>
+  <div class="drills">${list.map(p=>`<button class="dcard playcard" data-a="bOpen" data-id="lib:${p.id}">${fieldSVG(p,0,{thumb:true})}<span class="pc-text"><span class="dc-top"><span class="tag ${p.pos}">${POS_SHORT[p.pos]}</span><span class="sub">${p.steps.length} steps</span></span><span class="dc-name">${esc(p.title)}</span><span class="sub">${esc(p.summary)}</span></span></button>`).join('')}</div></section>`;
+  const mine=S.boards.slice().sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+  h+=`<section class="block"><h2>My boards</h2>${mine.length?`<div class="list">${mine.map(b=>`<button class="row" data-a="bOpen" data-id="${esc(b.id)}"><span class="row-main"><span class="row-title">${esc(b.title||'Untitled board')}</span><span class="row-sub">${b.steps.length} ${plural(b.steps.length,'step','steps')} · ${esc(VIEW_NAME[b.view]||'')}</span></span><span class="go" aria-hidden="true">›</span></button>`).join('')}</div>`:'<div class="empty"><p><b>No boards yet.</b></p><p>Start a new board to show him a move, or open a ready-made one and tap Copy to edit to change it.</p></div>'}</section>`;
+  return `<div class="view">${h}</div>`;
+}
+function renderBoardView(){
+  const b=boardFor(S.arg);
+  let h='<div class="bar"><button class="back" data-a="go" data-v="board">‹ Board</button>';
+  if(!b)return `<div class="view">${h}</div><p class="muted">${S.gotBoards?'This board is no longer here.':'Loading...'}</p></div>`;
+  const lib=String(S.arg).indexOf('lib:')===0;
+  if(S.bStep>=b.steps.length)S.bStep=0;
+  if(S.canWrite)h+=lib?'<button class="btn small" data-a="bCopy">Copy to edit</button>':`<button class="btn small" data-a="bEdit">Edit</button>`;
+  h+='</div>';
+  h+=`<header class="dhead">${lib?`<p class="eyebrow"><span class="tag ${b.pos}">${POS_SHORT[b.pos]}</span>Move to learn</p>`:''}<h1>${esc(b.title||'Untitled board')}</h1>${b.summary?`<p class="muted">${esc(b.summary)}</p>`:''}</header>`;
+  h+=fieldSVG(b,S.bStep,{});
+  h+=`<div class="player"><button class="btn small" data-a="bPrev" ${S.bStep===0||S.playing?'disabled':''}>‹ Back</button><span class="stepcount">Step ${S.bStep+1} of ${b.steps.length}</span><button class="btn small" data-a="bNext" ${S.bStep>=b.steps.length-1||S.playing?'disabled':''}>Next ›</button><button class="btn small primary" data-a="${S.playing?'bStop':'bPlay'}" ${b.steps.length<2?'disabled':''}>${S.playing?'Stop':'Play'}</button></div>`;
+  const cap=b.steps[S.bStep].caption;
+  if(cap||b.steps.length>1)h+=`<p class="caption">${cap?esc(cap):'<span class="muted">No note for this step.</span>'}</p>`;
+  h+=arrowLegend();
+  if(lib&&b.drills&&b.drills.length)h+=`<section class="block"><h2>Practice it</h2><div class="list pad">${b.drills.map(id=>dlink(DRILL[id])).join('')}</div></section>`;
+  return `<div class="view">${h}</div>`;
+}
+function toolHint(){
+  if(S.bTool==='move')return 'Drag players and the ball. Tap an arrow to bend or remove it.';
+  return 'Drag from a player or the ball to draw a '+KIND_NAME[S.bTool].toLowerCase()+' arrow. Then drag its middle dot to bend it.';
+}
+function renderBoardEdit(){
+  const b=S.bd;if(!b){S.view='board';return renderBoardList();}
+  if(S.bStep>=b.steps.length)S.bStep=b.steps.length-1;
+  const st=b.steps[S.bStep],sel=S.bSel;
+  let h=`<div class="bar"><button class="back" data-a="boardBack">‹ Back</button><span class="sub">${S.bEdit?'Editing a saved board':'Your draft is kept as you go'}</span></div>`;
+  h+=`<input id="b-title" type="text" class="title-input" data-f="title" value="${esc(b.title)}" placeholder="Name this board" aria-label="Board name" autocomplete="off">`;
+  h+=`<div class="seg tools" role="group" aria-label="Tool">${TOOLS.map(([v,l])=>`<button type="button" data-a="bTool" data-v="${v}" class="${S.bTool===v?'on':''}" aria-pressed="${S.bTool===v}">${l}</button>`).join('')}</div>`;
+  h+=`<p class="sub">${toolHint()}</p>`;
+  h+=fieldSVG(b,S.bStep,{edit:true,sel});
+  if(sel&&sel.kind==='tok'){
+    const i=b.tokens.findIndex(t=>t.id===sel.id),t=b.tokens[i];
+    if(t)h+=`<div class="selpanel"><span class="lbl2">${esc(TOKEN_NAME[t.type]||'Token')}</span>${t.type==='ball'||t.type==='cone'?'':`<div class="field sm"><label for="b-lab">Label</label><input id="b-lab" type="text" maxlength="3" data-f="tokens.${i}.label" value="${esc(t.label)}" autocomplete="off"></div><button type="button" class="mini ${t.hi?'on-gold':''}" data-a="bHi" aria-pressed="${!!t.hi}">Gold ring</button>`}<button type="button" class="mini" data-a="bDelTok">Remove</button></div>`;
+  }
+  if(sel&&sel.kind==='arr'&&st.arrows[sel.i]){
+    const ar=st.arrows[sel.i];
+    h+=`<div class="selpanel"><span class="lbl2">${KIND_NAME[ar.kind]} arrow</span>${ar.c?'<button type="button" class="mini" data-a="bStraight">Straighten</button>':''}<button type="button" class="mini" data-a="bDelArr">Remove</button></div>`;
+  }
+  h+=`<div class="addrow"><span class="lbl2">Add</span>${ADDABLE.map(([t,l])=>`<button type="button" class="btn small" data-a="bAdd" data-v="${t}">+ ${l}</button>`).join('')}</div>`;
+  h+=`<div class="row-btns"><button type="button" class="btn small" data-a="bUndo" ${S.bHist.length?'':'disabled'}>Undo</button><button type="button" class="btn small" data-a="bClearArrows" ${st.arrows.length?'':'disabled'}>Clear arrows</button></div>`;
+  h+=`<div class="field"><span class="lbl2">Show</span><div class="seg" role="group" aria-label="Part of the field">${Object.keys(VIEWBOX).map(v=>`<button type="button" data-a="set" data-p="view" data-v="${v}" class="${b.view===v?'on':''}" aria-pressed="${b.view===v}">${VIEW_NAME[v]}</button>`).join('')}</div></div>`;
+  h+=`<section class="group"><h2>Steps</h2><p class="sub">Each step is one moment of the move. Draw arrows for what happens next, then tap Add step: players and the ball move along your arrows.</p>
+  <div class="steps-bar">${b.steps.map((s,i)=>`<button type="button" class="stepchip ${i===S.bStep?'on':''}" data-a="bStep" data-i="${i}" aria-label="Step ${i+1}" aria-pressed="${i===S.bStep}">${i+1}</button>`).join('')}<button type="button" class="btn small" data-a="bAddStep">+ Add step</button>${b.steps.length>1?`<button type="button" class="btn small danger" data-a="bDelStep" data-confirm="Tap again to delete">Delete step ${S.bStep+1}</button>`:''}</div>
+  <div class="field"><label for="b-cap">What to say at step ${S.bStep+1}</label><textarea id="b-cap" data-f="steps.${S.bStep}.caption" placeholder="Example: Curve your run so you stay onside">${esc(st.caption)}</textarea></div></section>`;
+  h+=`<div class="savebar"><button class="btn primary wide" data-a="saveBoard">${S.bEdit?'Save changes':'Save board'}</button></div>`;
+  if(S.bEdit)h+=`<button class="btn danger wide" data-a="delBoard" data-confirm="Tap again to delete this board">Delete board</button>`;
+  return `<div class="view">${h}</div>`;
+}
+const TOKEN_NAME={us:'Teammate',gk:'Our keeper',them:'Opponent',ball:'Ball',cone:'Cone'};
+function redrawField(){
+  const svg=view.querySelector('svg[data-board]');if(!svg||!S.bd)return;
+  svg.outerHTML=fieldSVG(S.bd,S.bStep,{edit:true,sel:S.bSel});
+}
+async function saveBoard(btn){
+  if(!S.db)return toast(NO_DB);
+  const b=clone(S.bd);delete b.id;
+  b.title=String(b.title||'').trim().slice(0,60)||'Untitled board';
+  const now=new Date().toISOString();b.updatedAt=now;if(!b.createdAt)b.createdAt=now;
+  const ref=S.bEdit?S.db.doc('boards/'+S.bEdit):S.db.collection('boards').doc();
+  btn.disabled=true;btn.textContent='Saving...';
+  try{await ref.set(b);}catch(e){btn.disabled=false;btn.textContent='Save board';return toast(dbMsg(e));}
+  lsSet(K_BOARD,null);S.bd=null;S.bEdit=null;S.bHist=[];S.bSel=null;toast('Board saved');S.bStep=0;go('boardview',ref.id);
+}
+
+/* Playback: tokens glide from one step to the next, following the arrow
+   that carried them when there is one. */
+let animTok=0,playTok=0;
+function animateStep(b,from,to){
+  return new Promise(res=>{
+    const svg=view.querySelector('svg.field');const A=b.steps[from],B=b.steps[to];
+    if(!svg||!A||!B||REDUCED){res();return;}
+    const paths={},dA=displayPos(b,A),dB=displayPos(b,B);
+    b.tokens.forEach(t=>{
+      const p0=A.pos[t.id],p1=B.pos[t.id];if(!p0||!p1)return;
+      const fits=ar=>dist(ar.a,p0)<3.5&&dist(ar.b,p1)<3.5;
+      const arrs=A.arrows||[];
+      const ar=t.type==='ball'?(arrs.find(r=>(r.kind==='pass'||r.kind==='shot')&&fits(r))||arrs.find(fits)):arrs.find(r=>r.kind!=='pass'&&r.kind!=='shot'&&fits(r));
+      const q0=dA[t.id],q1=dB[t.id];
+      paths[t.id]={p0:q0,p1:q1,c:ar&&ar.c?[ar.c[0]+(q0[0]-ar.a[0]+q1[0]-ar.b[0])/2,ar.c[1]+(q0[1]-ar.a[1]+q1[1]-ar.b[1])/2]:null};
+    });
+    const els={};svg.querySelectorAll('[data-tok]').forEach(el=>{els[el.getAttribute('data-tok')]=el;});
+    const dur=1300,t0=performance.now(),my=++animTok;
+    const frame=now=>{
+      if(my!==animTok){res();return;}
+      const k=Math.min(1,(now-t0)/dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      for(const id in paths){const P=paths[id],el=els[id];if(!el)continue;
+        const q=P.c?qpt(P.p0,P.c,P.p1,e):[P.p0[0]+(P.p1[0]-P.p0[0])*e,P.p0[1]+(P.p1[1]-P.p0[1])*e];
+        el.setAttribute('transform','translate('+f1(q[0])+' '+f1(q[1])+')');}
+      if(k<1)requestAnimationFrame(frame);else res();
+    };
+    requestAnimationFrame(frame);
+  });
+}
+async function stepTo(n){
+  const b=boardFor(S.arg);if(!b||n<0||n>=b.steps.length)return;
+  if(n===S.bStep+1)await animateStep(b,S.bStep,n);
+  S.bStep=n;render();
+}
+async function playAll(){
+  const b=boardFor(S.arg);if(!b||b.steps.length<2)return;
+  const my=++playTok;S.playing=true;S.bStep=0;render();
+  await wait(1400);
+  for(let i=0;i<b.steps.length-1;i++){
+    if(my!==playTok)return;
+    await animateStep(b,i,i+1);
+    if(my!==playTok)return;
+    S.bStep=i+1;render();
+    await wait(i+1<b.steps.length-1?2600:400);
+  }
+  if(my===playTok){S.playing=false;render();}
+}
+function stopPlay(){playTok++;animTok++;S.playing=false;}
+
+document.addEventListener('pointerdown',e=>{
+  if(S.view!=='boardedit'||!S.bd)return;
+  const svg=e.target.closest&&e.target.closest('svg[data-board]');if(!svg)return;
+  e.preventDefault();
+  const st=curStep(),p=svgPoint(svg,e);
+  const hEl=e.target.closest('[data-handle]'),arEl=e.target.closest('[data-arrow]');
+  // The closest piece wins, so a player can be grabbed even with the ball at his feet.
+  let tokId=null,best=1e9;const dp=displayPos(S.bd,st);
+  S.bd.tokens.forEach(t=>{const q=dp[t.id];if(!q)return;const d=dist(q,p),r=t.type==='ball'||t.type==='cone'?2.8:3.6;if(d<=r&&d<best){best=d;tokId=t.id;}});
+  S.dragSnap=JSON.stringify(S.bd);
+  if(hEl)S.drag={kind:'handle',h:hEl.getAttribute('data-handle'),i:+hEl.getAttribute('data-i')};
+  else if(S.bTool==='move'){
+    if(tokId){st.pos[tokId]=dp[tokId].slice();const tp=st.pos[tokId];S.bSel={kind:'tok',id:tokId};S.drag={kind:'tok',id:tokId,off:[tp[0]-p[0],tp[1]-p[1]],el:svg.querySelector('[data-tok="'+tokId+'"]')};}
+    else if(arEl){S.bSel={kind:'arr',i:+arEl.getAttribute('data-arrow')};S.drag={kind:'none'};}
+    else{S.bSel=null;S.drag={kind:'none'};}
+  }else{
+    const a=tokId?dp[tokId].slice():clampPt(p);
+    S.drag={kind:'draw',a,b:clampPt(p)};
+  }
+  S.drag.svg=svg;
+  try{svg.setPointerCapture(e.pointerId);}catch(err){}
+});
+document.addEventListener('pointermove',e=>{
+  const d=S.drag;if(!d||!d.svg||!S.bd)return;
+  const p=svgPoint(d.svg,e),st=curStep();
+  if(d.kind==='tok'){const np=clampPt([p[0]+d.off[0],p[1]+d.off[1]]);st.pos[d.id]=np;if(d.el)d.el.setAttribute('transform','translate('+np[0]+' '+np[1]+')');}
+  else if(d.kind==='handle'){
+    const ar=st.arrows[d.i];if(!ar)return;const q=clampPt(p);
+    if(d.h==='c')ar.c=[r1(2*q[0]-(ar.a[0]+ar.b[0])/2),r1(2*q[1]-(ar.a[1]+ar.b[1])/2)];else ar[d.h]=q;
+    d.svg.querySelector('g.arrows').innerHTML=arrowsSVG(st.arrows,{edit:true,sel:S.bSel});
+    d.svg.querySelector('g.handles').innerHTML=handlesSVG(st.arrows,{edit:true,sel:S.bSel});
+  }else if(d.kind==='draw'){
+    d.b=clampPt(p);const pe=d.svg.querySelector('#drawPath');
+    if(pe){pe.setAttribute('d','M'+d.a[0]+' '+d.a[1]+'L'+d.b[0]+' '+d.b[1]);pe.setAttribute('class','arr draft '+S.bTool);}
+  }
+});
+function endDrag(){
+  const d=S.drag;if(!d)return;S.drag=null;if(!S.bd)return;
+  if(d.kind==='draw'&&dist(d.a,d.b)>=1.5){const st=curStep();st.arrows.push({kind:S.bTool,a:d.a,b:d.b,c:null});S.bSel={kind:'arr',i:st.arrows.length-1};}
+  if(JSON.stringify(S.bd)!==S.dragSnap){S.bHist.push(S.dragSnap);if(S.bHist.length>60)S.bHist.shift();persist();}
+  render();
+}
+document.addEventListener('pointerup',endDrag);
+document.addEventListener('pointercancel',endDrag);
+function svgPoint(svg,e){
+  const m=svg.getScreenCTM();if(!m)return [0,0];
+  const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(m.inverse());
+  return [q.x,q.y];
+}
+
 /* ---------- Render loop ---------- */
-const VIEWS={home:renderHome,games:renderGames,game:renderGame,gameform:renderGameForm,train:renderTrain,drill:renderDrill,sessionform:renderSessionForm,progress:renderProgress,player:renderPlayer};
-const TAB_OF={home:'home',player:'home',games:'games',game:'games',gameform:'games',train:'train',drill:'train',sessionform:'train',progress:'progress'};
+const VIEWS={home:renderHome,games:renderGames,game:renderGame,gameform:renderGameForm,train:renderTrain,drill:renderDrill,sessionform:renderSessionForm,progress:renderProgress,player:renderPlayer,board:renderBoardList,boardview:renderBoardView,boardedit:renderBoardEdit};
+const TAB_OF={home:'home',player:'home',games:'games',game:'games',gameform:'games',train:'train',drill:'train',sessionform:'train',progress:'progress',board:'board',boardview:'board',boardedit:'board'};
 function keyOf(el){if(!el||!el.dataset||!el.dataset.a)return null;const d=el.dataset;return [d.a,d.p,d.d,d.id,d.z,d.i,d.v].join('|');}
 function render(){
   const k=view.contains(document.activeElement)?keyOf(document.activeElement):null;
@@ -565,10 +863,10 @@ function render(){
   document.querySelectorAll('.tab').forEach(t=>{const on=t.dataset.v===TAB_OF[S.view];t.classList.toggle('on',on);if(on)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current');});
   if(k){for(const el of view.querySelectorAll('[data-a]')){if(keyOf(el)===k){el.focus({preventScroll:true});break;}}}
 }
-function go(v,arg){S.view=v;S.arg=arg==null?null:arg;render();window.scrollTo(0,0);}
+function go(v,arg){if(S.playing||animTok)stopPlay();S.view=v;S.arg=arg==null?null:arg;render();window.scrollTo(0,0);}
 function refresh(){if(!FORM_VIEWS.has(S.view))render();}
-function draft(){return S.view==='gameform'?S.gd:S.view==='sessionform'?S.sd:S.view==='player'?S.pf:null;}
-function persist(){if(S.view==='gameform'&&S.gd)lsSet(K_GAME,{edit:S.gEdit,d:S.gd});else if(S.view==='sessionform'&&S.sd)lsSet(K_SESS,{edit:S.sEdit,d:S.sd});}
+function draft(){return S.view==='gameform'?S.gd:S.view==='sessionform'?S.sd:S.view==='player'?S.pf:S.view==='boardedit'?S.bd:null;}
+function persist(){if(S.view==='gameform'&&S.gd)lsSet(K_GAME,{edit:S.gEdit,d:S.gd});else if(S.view==='sessionform'&&S.sd)lsSet(K_SESS,{edit:S.sEdit,d:S.sd});else if(S.view==='boardedit'&&S.bd)lsSet(K_BOARD,{edit:S.bEdit,d:S.bd});}
 function edited(){persist();render();}
 let toastT;
 function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},2800);}
@@ -683,9 +981,39 @@ const A={
   importConfirm:t=>confirmTap(t,()=>{
     try{S.db.replaceAll(S.pendingImport.data);}catch(e){return toast(dbMsg(e));}
     S.pendingImport=null;S.pf=null;
-    lsSet(K_GAME,null);lsSet(K_SESS,null);toast('Backup restored');go('home');
+    lsSet(K_GAME,null);lsSet(K_SESS,null);lsSet(K_BOARD,null);toast('Backup restored');go('home');
   }),
-  importCancel:()=>{S.pendingImport=null;render();}
+  importCancel:()=>{S.pendingImport=null;render();},
+  playPos:t=>{S.playPos=t.dataset.v;render();},
+  bOpen:t=>{S.bStep=0;go('boardview',t.dataset.id);},
+  bNew:t=>{S.bd=boardTemplate(t.dataset.v);S.bEdit=null;S.bStep=0;S.bTool='move';S.bSel=null;S.bHist=[];go('boardedit');persist();},
+  bResume:()=>{const dr=lsGet(K_BOARD);if(!dr||!dr.d)return;S.bd=dr.d;S.bEdit=dr.edit||null;S.bStep=0;S.bTool='move';S.bSel=null;S.bHist=[];go('boardedit');},
+  bCopy:()=>{const p=boardFor(S.arg);if(!p)return;S.bd=libToDraft(p);S.bd.title='My '+p.title.charAt(0).toLowerCase()+p.title.slice(1);S.bEdit=null;S.bStep=0;S.bTool='move';S.bSel=null;S.bHist=[];go('boardedit');persist();},
+  bEdit:()=>{const b=boardFor(S.arg);if(!b)return;S.bd=clone(b);delete S.bd.id;S.bEdit=b.id;S.bStep=0;S.bTool='move';S.bSel=null;S.bHist=[];go('boardedit');persist();},
+  boardBack:()=>{if(S.bEdit){S.bStep=0;go('boardview',S.bEdit);}else go('board');},
+  bTool:t=>{S.bTool=t.dataset.v;render();},
+  bAdd:t=>{
+    pushHist();const type=t.dataset.v,id='t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    const c=VIEW_CENTER[S.bd.view]||VIEW_CENTER.full,n=S.bd.tokens.length%5;
+    S.bd.tokens.push({id,type,label:nextLabel(type)});
+    S.bd.steps.forEach(st=>{st.pos[id]=[r1(c[0]-6+n*3),r1(c[1]+(n%2?3:-3))];});
+    S.bSel={kind:'tok',id};S.bTool='move';edited();
+  },
+  bDelTok:()=>{if(!S.bSel||S.bSel.kind!=='tok')return;pushHist();const id=S.bSel.id;S.bd.tokens=S.bd.tokens.filter(t=>t.id!==id);S.bd.steps.forEach(st=>{delete st.pos[id];});S.bSel=null;edited();},
+  bHi:()=>{const t=S.bSel&&S.bd.tokens.find(x=>x.id===S.bSel.id);if(!t)return;pushHist();t.hi=!t.hi;edited();},
+  bDelArr:()=>{if(!S.bSel||S.bSel.kind!=='arr')return;pushHist();curStep().arrows.splice(S.bSel.i,1);S.bSel=null;edited();},
+  bStraight:()=>{const ar=S.bSel&&curStep().arrows[S.bSel.i];if(!ar)return;pushHist();ar.c=null;edited();},
+  bUndo:()=>{if(!S.bHist.length)return;S.bd=JSON.parse(S.bHist.pop());S.bSel=null;if(S.bStep>=S.bd.steps.length)S.bStep=S.bd.steps.length-1;edited();},
+  bClearArrows:()=>{pushHist();curStep().arrows=[];S.bSel=null;edited();},
+  bStep:t=>{S.bStep=+t.dataset.i;S.bSel=null;render();},
+  bAddStep:()=>{pushHist();const cur=curStep();S.bd.steps.splice(S.bStep+1,0,{caption:'',pos:advancePositions(cur),arrows:[]});S.bStep++;S.bSel=null;S.bTool='move';edited();toast(cur.arrows.length?'Step added. Players moved along your arrows.':'Step added. Drag players to their new spots.');},
+  bDelStep:t=>confirmTap(t,()=>{pushHist();S.bd.steps.splice(S.bStep,1);S.bStep=Math.max(0,S.bStep-1);S.bSel=null;edited();}),
+  saveBoard:t=>saveBoard(t),
+  delBoard:t=>confirmTap(t,async()=>{const id=S.bEdit;if(!S.db||!id)return;try{await S.db.doc('boards/'+id).delete();}catch(e){return toast(dbMsg(e));}lsSet(K_BOARD,null);S.bd=null;S.bEdit=null;toast('Board deleted');go('board');}),
+  bPrev:()=>stepTo(S.bStep-1),
+  bNext:()=>stepTo(S.bStep+1),
+  bPlay:()=>playAll(),
+  bStop:()=>{stopPlay();render();}
 };
 document.addEventListener('click',e=>{
   const pitch=e.target.closest&&e.target.closest('svg[data-pitch]');
@@ -702,6 +1030,7 @@ document.addEventListener('input',e=>{
   const d=draft();if(!d)return;
   let v=t.value;if(t.type==='number')v=v===''?'':Number(v);
   setPath(d,t.dataset.f,v);
+  if(S.view==='boardedit'&&/^tokens\./.test(t.dataset.f)){persist();redrawField();return;}
   if(/\.drillId$/.test(t.dataset.f)){const i=+t.dataset.f.split('.')[1];if(DRILL[v]&&d.items[i]){d.items[i].outOf=DRILL[v].score.n||'';d.items[i].score='';}edited();return;}
   persist();
 });
@@ -752,7 +1081,7 @@ function makeLocalDB(){
     doc:path=>{const p=path.split('/');return ref(p[0],p[1]);},
     collection:c=>({doc:id=>ref(c,id||newId()),onSnapshot:fn=>{(listeners[c]||(listeners[c]=[])).push(fn);setTimeout(()=>fn(snapshot(c)),0);return ()=>{listeners[c]=listeners[c].filter(f=>f!==fn);};}}),
     exportAll:()=>clone(data),
-    replaceAll:next=>{const prev=data;data={games:clone(next.games||{}),sessions:clone(next.sessions||{}),meta:clone(next.meta||{})};try{write();}catch(e){data=prev;throw e;}emitAll();}
+    replaceAll:next=>{const prev=data;data={};['games','sessions','meta','boards'].forEach(c=>{data[c]=next[c]&&typeof next[c]==='object'?clone(next[c]):{};});try{write();}catch(e){data=prev;throw e;}emitAll();}
   };
 }
 
@@ -794,10 +1123,11 @@ function connect(){
   const db=makeLocalDB();S.db=db;S.canWrite=true;
   db.collection('games').onSnapshot(s=>{S.games=s.docs.map(x=>Object.assign(clone(x.data()),{id:x.id}));S.gotGames=true;refresh();});
   db.collection('sessions').onSnapshot(s=>{S.sessions=s.docs.map(x=>Object.assign(clone(x.data()),{id:x.id}));S.gotSessions=true;refresh();});
+  db.collection('boards').onSnapshot(s=>{S.boards=s.docs.map(x=>Object.assign(clone(x.data()),{id:x.id}));S.gotBoards=true;refresh();});
   db.collection('meta').onSnapshot(s=>{const p=s.docs.find(x=>x.id==='profile');S.profile=Object.assign(defaultProfile(),p?clone(p.data()):{});refresh();});
 }
 (function start(){
-  const h=location.hash.slice(1);if(['games','train','progress'].indexOf(h)>=0)S.view=h;
+  const h=location.hash.slice(1);if(['games','train','progress','board'].indexOf(h)>=0)S.view=h;
   connect();render();
   if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
 })();

@@ -1,12 +1,13 @@
 // Offline support. Serves the app from the cache right away (so it opens at
 // a field with no signal) and refreshes the cache in the background, so a
 // new version shows up the next time the app is opened.
-const CACHE = 'ksl-v1';
+const CACHE = 'ksl-v2';
 const SHELL = [
   './',
   'index.html',
   'app.css',
   'app.js',
+  'plays.js',
   'manifest.webmanifest',
   'icons/icon.svg',
   'icons/icon-192.png',

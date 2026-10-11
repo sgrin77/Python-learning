@@ -19,6 +19,12 @@ works offline at the field. There is no App Store, no account, and no cost.
   notes.
 - **Train**: 24 drills a parent can run with him (steps, coaching cues, and a
   score such as "clean catches out of 20"), plus a training log.
+- **Board**: a soccer field to teach moves. Drag players and the ball, draw
+  runs (dashed), passes (solid), dribbles (zigzag) and shots (gold), and
+  build a move in steps that animate when you press Play. It comes with 9
+  ready-made moves (4 for keeper, 5 for striker), each with a coaching note
+  per step and links to drills that practice it. Copy one to change it, or
+  start from an empty field or a 9v9 lineup.
 - **Progress**: save rate and shots on target per game, where goals go in,
   every shot on one map, mistakes trending up or down, and drill score trends.
 
@@ -62,7 +68,8 @@ over on the following launch).
 soccer/
   index.html            App shell and iPhone install settings
   app.css               Styles (light and dark mode)
-  app.js                Screens, drills, mistake tags, storage, backup
+  app.js                Screens, drills, mistake tags, board, storage, backup
+  plays.js              Ready-made moves for the Board tab
   manifest.webmanifest  App name and icons for the home screen
   sw.js                 Offline support
   icons/                Home screen icons
@@ -70,6 +77,10 @@ soccer/
 
 To add a drill, append an entry to `DRILLS` in `app.js`. List the mistake ids
 it helps with in `fixes` so it shows up in the weekly focus list.
+
+To add a ready-made move, append an entry to `plays.js`. The comment at the
+top explains the field coordinates. The easiest way is to build the move on the
+Board tab, make a backup, and copy the board out of the backup file.
 
 ## A true App Store app later?
 
