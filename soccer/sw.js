@@ -1,7 +1,8 @@
 // Offline support. Serves the app from the cache right away (so it opens at
-// a field with no signal) and refreshes the cache in the background, so a
-// new version shows up the next time the app is opened.
-const CACHE = 'ksl-v3';
+// a field with no signal) and checks GitHub for newer files in the
+// background. When a file has changed, it tells the open app, which reloads
+// itself so the new version shows up right away.
+const CACHE = 'ksl-v4';
 const SHELL = [
   './',
   'index.html',
@@ -16,7 +17,8 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's own short-term cache, so a new version never precaches old files.
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,6 +28,10 @@ self.addEventListener('activate', (event) => {
       .then(() => self.clients.claim())
   );
 });
+
+const versionOf = (res) => res.headers.get('etag') || res.headers.get('last-modified') || '';
+const notifyUpdated = () =>
+  self.clients.matchAll({ type: 'window' }).then((cs) => cs.forEach((c) => c.postMessage({ type: 'ksl-updated' })));
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -38,9 +44,14 @@ self.addEventListener('fetch', (event) => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(req, { ignoreSearch: sameOrigin });
-    const fresh = fetch(req)
-      .then((res) => {
-        if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+    // no-cache: always ask GitHub whether the file changed, instead of trusting
+    // the browser's 10-minute copy.
+    const fresh = fetch(req, sameOrigin ? { cache: 'no-cache' } : undefined)
+      .then(async (res) => {
+        if (res && (res.ok || res.type === 'opaque')) {
+          await cache.put(req, res.clone());
+          if (sameOrigin && cached && versionOf(res) && versionOf(res) !== versionOf(cached)) notifyUpdated();
+        }
         return res;
       })
       .catch(() => null);

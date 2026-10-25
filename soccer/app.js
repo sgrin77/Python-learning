@@ -1436,6 +1436,23 @@ function connect(){
 (function start(){
   const h=location.hash.slice(1);if(['games','train','progress','board'].indexOf(h)>=0)S.view=h;
   connect();render();
-  if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+  if('serviceWorker' in navigator&&location.protocol!=='file:'){
+    window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').then(reg=>{
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reg.update().catch(()=>{});});
+    }).catch(()=>{});});
+    /* The offline helper says a newer version just arrived: reload once to show it, unless he is mid-entry. */
+    let upd=null;
+    navigator.serviceWorker.addEventListener('message',e=>{
+      if(!e.data||e.data.type!=='ksl-updated')return;
+      clearTimeout(upd);
+      upd=setTimeout(()=>{
+        let last=0;try{last=+sessionStorage.getItem('ksl:reloadedAt')||0;}catch(err){}
+        if(Date.now()-last<60000)return;
+        if(FORM_VIEWS.has(S.view)||S.playing){toast('A new version is ready. It loads next time you open the app.');return;}
+        try{sessionStorage.setItem('ksl:reloadedAt',String(Date.now()));}catch(err){}
+        location.reload();
+      },1500);
+    });
+  }
 })();
 })();
