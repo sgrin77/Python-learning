@@ -1,0 +1,61 @@
+# Copy this file to config.toml and edit it. config.toml is git-ignored, so secrets stay local.
+
+[target]
+# The public portfolio link of the player to follow (from the game's Rankings page).
+url = "https://www.marketwatch.com/games/mka-finance-club-2026-2027/portfolio?pub=fI5MMiMkkUKx"
+# What to call them in alerts.
+name = "The leader"
+
+[polling]
+market_interval_seconds = 120      # how often to check 9:20am-4:10pm ET on weekdays
+off_hours_interval_seconds = 900   # nights/weekends (orders queued after hours still get caught)
+failure_alert_after = 3            # failed checks in a row before you get a "tracker is blind" alert
+holdings_quiet_minutes = 30
+
+[fetch]
+method = "http"        # "http" (default) or "browser" (real Chrome via Playwright, if http gets blocked)
+cookie = ""            # optional: paste your browser's Cookie header if the game needs you signed in
+headless = true        # browser method only
+browser = ""           # browser method: "msedge" or "chrome" uses the one already installed
+browser_profile = "browser-profile"
+
+[mirror]
+# How big should YOUR suggested trade be?
+#   scale = 1.0 copies their share count exactly, 0.5 copies half, and so on.
+#   my_portfolio_value > 0 overrides scale and copies the same % of portfolio instead.
+scale = 1.0
+my_portfolio_value = 0
+
+[alerts.console]
+enabled = true
+bell = true
+
+[alerts.ntfy]
+# Free phone push: install the "ntfy" app (iOS/Android), subscribe to the same topic name.
+# Anyone who guesses the topic can read it, so make it long and random.
+enabled = false
+server = "https://ntfy.sh"
+topic = "change-me-mw-alerts-8f3k2q9z"
+
+[alerts.email]
+enabled = false
+smtp_host = "smtp.gmail.com"
+smtp_port = 587
+username = "you@gmail.com"
+password = ""            # Gmail App Password, or leave blank and set MWTRACKER_SMTP_PASSWORD
+from_addr = ""
+to_addrs = ["you@gmail.com"]
+min_priority = "default" # skip low-priority notes like "order cancelled"
+
+[alerts.webhook]
+enabled = false
+url = ""                 # Discord or Slack incoming-webhook URL
+style = "discord"        # discord | slack | generic
+
+[alerts.desktop]
+enabled = false          # macOS / Linux pop-up notifications
+
+[storage]
+state_file = "state.json"
+debug_dir = "debug"
+log_file = "tracker.log"
