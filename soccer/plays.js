@@ -9,6 +9,7 @@
 // hi: true draws a gold ring around the player this move is about.
 // Arrow kinds: pass, run, dribble, shot. c is an optional bend point.
 // drills lists drill ids from app.js that practice the same skill.
+// ages limits who sees the move (default 9 to 18); pos 'young' marks moves for ages 5 to 8.
 window.KSL_PLAYS = [
   {
     id: 'narrow-angle', pos: 'gk', view: 'defend',
@@ -319,6 +320,67 @@ window.KSL_PLAYS = [
         caption: 'You are through on goal. Pick your corner and finish.',
         pos: { st: [41, 13], c5: [37, 20], m6: [34, 48], m8: [29.5, 33.5], k: [36, 4], b: [41.4, 11.8] },
         arrows: [{ kind: 'shot', a: [41.4, 11.8], b: [32, 0.3] }]
+      }
+    ]
+  },
+  {
+    id: 'open-space', pos: 'young', view: 'attack', ages: [5, 8],
+    title: 'Dribble into open space',
+    summary: 'Look up, find the empty space, and go score.',
+    drills: ['y_sharks', 'y_slalom'],
+    tokens: [
+      { id: 'me', type: 'us', label: 'You', hi: true },
+      { id: 'd1', type: 'them', label: '' },
+      { id: 'd2', type: 'them', label: '' },
+      { id: 'd3', type: 'them', label: '' },
+      { id: 'b', type: 'ball' }
+    ],
+    steps: [
+      {
+        caption: 'Lots of players are right in front of you. Look up: where is the empty space?',
+        pos: { me: [30, 42], d1: [24, 32], d2: [29.5, 30.5], d3: [35, 32], b: [30, 40.6] },
+        arrows: [{ kind: 'dribble', a: [30, 42], b: [47, 31], c: [44, 42] }]
+      },
+      {
+        caption: 'Dribble into the empty space. Little touches keep the ball close to your feet.',
+        pos: { me: [47, 31], d1: [27, 33], d2: [33, 33], d3: [39, 33.5], b: [46.5, 29.5] },
+        arrows: [{ kind: 'dribble', a: [47, 31], b: [41, 15], c: [48, 21] }]
+      },
+      {
+        caption: 'Now you are close to the goal. Look at the goal, then kick it in!',
+        pos: { me: [41, 15], d1: [31, 27], d2: [36, 25], d3: [42, 24], b: [40.5, 13.6] },
+        arrows: [{ kind: 'shot', a: [40.5, 13.6], b: [35, 0.3] }]
+      }
+    ]
+  },
+  {
+    id: 'spread-out', pos: 'young', view: 'attack', ages: [5, 8],
+    title: 'Spread out, do not bunch',
+    summary: 'Find space away from the crowd so a teammate can pass to you.',
+    drills: ['y_spread', 'y_sharks'],
+    tokens: [
+      { id: 'me', type: 'us', label: 'You', hi: true },
+      { id: 't2', type: 'us', label: '' },
+      { id: 't3', type: 'us', label: '' },
+      { id: 'o1', type: 'them', label: '' },
+      { id: 'o2', type: 'them', label: '' },
+      { id: 'b', type: 'ball' }
+    ],
+    steps: [
+      {
+        caption: 'Everyone is chasing the ball in one big bunch. It is hard to play when everyone is in the same spot.',
+        pos: { me: [37.5, 36.5], t2: [32, 34], t3: [27, 37.5], o1: [33, 27], o2: [38.5, 31], b: [32.6, 32.5] },
+        arrows: [{ kind: 'run', a: [37.5, 36.5], b: [52, 30], c: [48, 38] }]
+      },
+      {
+        caption: 'Run away from the bunch to an empty space and call your teammate’s name.',
+        pos: { me: [52, 30], t2: [32, 34], t3: [27, 37.5], o1: [33, 27], o2: [38.5, 31], b: [32.6, 32.5] },
+        arrows: [{ kind: 'pass', a: [33.2, 31], b: [51, 31.6] }]
+      },
+      {
+        caption: 'Now you have the ball and space to dribble. Spreading out helps the whole team.',
+        pos: { me: [52, 30], t2: [33, 30], t3: [30, 36], o1: [40, 27], o2: [45, 30], b: [51, 31.6] },
+        arrows: [{ kind: 'dribble', a: [52, 30], b: [44, 14], c: [53, 20] }]
       }
     ]
   }

@@ -4,7 +4,7 @@
   --accent:#1B6B45; --accent-ink:#FFFFFF; --accent-soft:#D6E9DC;
   --gk:#B4500F; --gk-soft:#FBE5D3; --on-gk:#FFFFFF;
   --st:#2950C2; --st-soft:#DFE6FA; --on-st:#FFFFFF;
-  --good:#1D7F49; --good-soft:#D7EEDF; --bad:#BC3326; --bad-soft:#F7DDD8;
+  --good:#1D7F49; --good-soft:#D7EEDF; --speed:#8A5A00; --speed-soft:#FCEFC7; --bad:#BC3326; --bad-soft:#F7DDD8;
   --hero:#16472F; --hero-ink:#F1F6F2; --hero-muted:#B4D1BE; --hero-line:rgba(255,255,255,.16);
   --turf:#2F7A4E; --turf-2:#2B7148; --chalk:#F4F8F4;
   --shot-goal:#FFD43B; --shot-on:#FFFFFF; --shot-off:#FF8A7A; --shot-blk:#A9B8AE;
@@ -18,7 +18,7 @@
     --accent:#46B07A; --accent-ink:#06140C; --accent-soft:#18392A;
     --gk:#F2914F; --gk-soft:#3B2617; --on-gk:#1A0C03;
     --st:#86A2F5; --st-soft:#1C2648; --on-st:#0A1230;
-    --good:#53C58A; --good-soft:#163525; --bad:#F27466; --bad-soft:#3D1F1B;
+    --good:#53C58A; --good-soft:#163525; --speed:#F2C14E; --speed-soft:#3A2F12; --bad:#F27466; --bad-soft:#3D1F1B;
     --hero:#12321F; --hero-ink:#EAF3EC; --hero-muted:#97BFA5; --hero-line:rgba(255,255,255,.11);
     --turf:#1F5A3A; --turf-2:#1C5235; --chalk:#DCEADF;
     color-scheme:dark;
@@ -29,7 +29,7 @@
   --accent:#46B07A; --accent-ink:#06140C; --accent-soft:#18392A;
   --gk:#F2914F; --gk-soft:#3B2617; --on-gk:#1A0C03;
   --st:#86A2F5; --st-soft:#1C2648; --on-st:#0A1230;
-  --good:#53C58A; --good-soft:#163525; --bad:#F27466; --bad-soft:#3D1F1B;
+  --good:#53C58A; --good-soft:#163525; --speed:#F2C14E; --speed-soft:#3A2F12; --bad:#F27466; --bad-soft:#3D1F1B;
   --hero:#12321F; --hero-ink:#EAF3EC; --hero-muted:#97BFA5; --hero-line:rgba(255,255,255,.11);
   --turf:#1F5A3A; --turf-2:#1C5235; --chalk:#DCEADF;
   color-scheme:dark;
@@ -325,3 +325,26 @@ textarea{min-height:76px;resize:vertical}
 .stepchip{min-width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-family:var(--f-display);font-weight:700;font-size:1.15rem}
 .stepchip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .row .go{color:var(--accent);font-size:1.5rem;line-height:1}
+
+/* Players, ages and programs */
+.who{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.whochip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;min-height:40px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.whochip small{font-family:var(--f-display);font-size:.95rem;font-weight:600;color:var(--muted)}
+.whochip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.whochip.on small{color:var(--accent-ink);opacity:.8}
+.whochip.add{color:var(--accent);border-style:dashed;background:transparent}
+.tag.speed{background:var(--speed-soft);color:var(--speed)}
+.tag.young{background:var(--good-soft);color:var(--good)}
+.tag.goal{background:var(--accent-soft);color:var(--accent)}
+.badge.all{background:var(--hero-ink);color:var(--hero)}
+.drill-note{background:var(--speed-soft);border-radius:10px;padding:10px 12px;font-size:.95rem;max-width:65ch}
+.prog{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px}
+.progbar{height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.progbar span{display:block;height:100%;background:var(--accent);border-radius:5px}
+.prog-items{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.prog-items li .dlink{border-bottom:1px solid var(--line)}
+.prog-items li:last-child .dlink{border-bottom:0}
+.prog-list{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:2px}
+.prog-list .link{padding:4px 0;min-height:0}
+.prog-sess.done{opacity:.7}
+.agechip{font-family:var(--f-display);font-size:1.8rem;font-weight:700;line-height:44px}
