@@ -25,7 +25,16 @@ const ERRORS=[
   {id:'st_static',pos:'st',area:'Movement',label:'Stood still, no runs'},
   {id:'st_holdup',pos:'st',area:'Hold-up play',label:'Lost it with his back to goal'},
   {id:'st_decision',pos:'st',area:'Decisions',label:'Shot when he should pass, or the reverse'},
-  {id:'st_press',pos:'st',area:'Work rate',label:'Did not press defenders'}
+  {id:'st_press',pos:'st',area:'Work rate',label:'Did not press defenders'},
+  {id:'st_pace',pos:'st',area:'Speed',label:'Beaten to the ball for speed'},
+  {id:'gk_across',pos:'gk',area:'Speed',label:'Too slow getting across the goal'},
+  {id:'y_kickaway',pos:'young',area:'Dribbling',label:'Kicked it away instead of dribbling'},
+  {id:'y_farball',pos:'young',area:'Ball control',label:'Ball got too far from his feet'},
+  {id:'y_bunch',pos:'young',area:'Spacing',label:'Joined the bunch around the ball'},
+  {id:'y_stopped',pos:'young',area:'Effort',label:'Stopped running after losing the ball'},
+  {id:'y_onefoot',pos:'young',area:'Both feet',label:'Only used one foot'},
+  {id:'y_watching',pos:'young',area:'Getting involved',label:'Watched instead of joining in'},
+  {id:'y_upset',pos:'young',area:'Mindset',label:'Got upset after a mistake'}
 ];
 const WELLS=[
   {id:'w_bigsave',pos:'gk',label:'Big save'},
@@ -41,8 +50,18 @@ const WELLS=[
   {id:'w_weak',pos:'st',label:'Used his weak foot'},
   {id:'w_assist',pos:'st',label:'Set up a teammate'},
   {id:'w_effort',pos:'both',label:'Never stopped working'},
-  {id:'w_bounce',pos:'both',label:'Bounced back after a mistake'}
+  {id:'w_bounce',pos:'both',label:'Bounced back after a mistake'},
+  {id:'yw_dribble',pos:'young',label:'Dribbled past someone'},
+  {id:'yw_headup',pos:'young',label:'Looked up while dribbling'},
+  {id:'yw_bothfeet',pos:'young',label:'Used both feet'},
+  {id:'yw_stop',pos:'young',label:'Stopped the ball under control'},
+  {id:'yw_shot',pos:'young',label:'Took a shot'},
+  {id:'yw_pass',pos:'young',label:'Passed to a teammate'},
+  {id:'yw_chase',pos:'young',label:'Chased to win the ball back'},
+  {id:'yw_fun',pos:'young',label:'Had a big smile'}
 ];
+const SPEED_NOTE='Speed rules: warm up first, keep every rep short and all-out, rest fully between reps (walk back, then 30 to 60 seconds), and stop as soon as he starts slowing down.';
+const YOUNG_NOTE='At this age, keep it a game: a few minutes per activity, lots of praise, and stop while he still wants more.';
 const DRILLS=[
   {id:'gk_wcatch',pos:'gk',name:'W-Catch Wall Ball',mins:10,need:'A ball and a wall, or a parent to throw',fixes:['gk_handling','gk_focus'],
    steps:['Stand 3 to 4 big steps from a wall in your ready position: feet shoulder-width apart, knees bent, hands up.','Throw the ball hard at the wall at chest height. Catch the rebound with your hands in a W shape, thumbs almost touching behind the ball.','Pull the ball into your chest every time. Do 10 at chest height, then 10 at head height.'],
@@ -115,20 +134,126 @@ const DRILLS=[
    cues:['Soft ankle, toe slightly up','Keep the ball below your waist','Little touches, little hops'],score:{type:'count',unit:'best streak'}},
   {id:'both_feet',pos:'both',name:'Quick Feet Ladder',mins:8,need:'An agility ladder, or 8 cones or shoes half a meter apart',fixes:['gk_set','gk_rebound','st_static'],
    steps:['Lay out the ladder or markers in a line.','Do 2 runs of each pattern: two feet in each box, sideways shuffle, in-in-out-out, hopscotch.','Finish each run with a 5-meter sprint or by landing in your set position.'],
-   cues:['Up on your toes','Pump your arms to make your feet faster','Clean steps first, then speed'],score:{type:'done'}}
+   cues:['Up on your toes','Pump your arms to make your feet faster','Clean steps first, then speed'],score:{type:'done'}},
+  {id:'sp_warmup',pos:'speed',name:'Speed Warm-up',mins:5,ages:[6,18],need:'Open space about 20 meters long',fixes:[],
+   steps:['Jog easily for 2 minutes.','Then 15 meters each: high knees, butt kicks, side shuffles both ways, skipping, and jogging backward.','Finish with 3 build-up runs: start slow and get faster, reaching about 80 percent of top speed at the end.'],
+   cues:['Warm muscles are fast muscles','Stay light on your toes','A little faster on every build-up run'],score:{type:'done'}},
+  {id:'sp_form',pos:'speed',name:'Fast Feet Form',mins:8,ages:[8,18],need:'Open space about 20 meters long',fixes:['st_pace'],note:SPEED_NOTE,
+   steps:['March with high knees for 15 meters, swinging your arms from hip to chin.','A-skips for 15 meters, twice: a skip where the knee drives up and the foot lands under your hips.','Finish with 2 relaxed fast runs of 20 meters, using the same arm swing.'],
+   cues:['Tall body, eyes forward','Drive the knee up, land under your hips','Arms swing forward and back, not across your body'],score:{type:'done'}},
+  {id:'sp_falling',pos:'speed',name:'Falling Starts',mins:8,ages:[9,18],need:'Open space and 2 cones 10 meters apart',fixes:['st_pace','gk_across'],note:SPEED_NOTE,
+   steps:['Stand tall at the first cone with your feet together.','Lean forward like a falling tree until you have to step, then sprint hard to the cone 10 meters away.','Walk back slowly to rest before the next one.'],
+   cues:['Lean from the ankles with a straight body','Short, powerful first steps','Push the ground back behind you'],score:{type:'done'}},
+  {id:'sp_reaction',pos:'speed',name:'Ball Drop Race',mins:8,ages:[7,18],need:'A tennis ball and a parent',fixes:['st_pace','gk_focus','gk_across'],note:SPEED_NOTE,
+   steps:['Stand 3 big steps from the parent in a ready stance.','The parent holds a tennis ball out at shoulder height and drops it without warning.','Sprint and catch it before it bounces twice. Take one step farther back after each catch.'],
+   cues:['React to the drop, do not guess','The first three steps are the fastest ones','Stay low and reach at the end'],score:{type:'of',n:8,unit:'catches before the second bounce'}},
+  {id:'sp_flying',pos:'speed',name:'Flying 20s',mins:12,ages:[10,18],need:'Open space 40 meters long, 3 cones, a phone stopwatch',fixes:['st_pace'],note:SPEED_NOTE,
+   steps:['Put cones at 0, 15 and 35 meters. Build up speed from the first cone so you hit top speed at the second.','Sprint flat out through the 20 meters between the second and third cones. The parent times only that part.','Walk back and rest 2 to 3 minutes before the next one. Log the fastest time.'],
+   cues:['Relax your face and shoulders at top speed','Run tall','Keep pumping your arms through the last cone'],score:{type:'time',unit:'seconds'}},
+  {id:'sp_test',pos:'speed',name:'20 m Sprint Test',mins:6,ages:[8,18],need:'Open space, 2 cones 20 meters apart, a phone stopwatch',fixes:[],note:SPEED_NOTE,
+   steps:['Warm up first.','Start standing at the first cone. The parent says “Go!” and starts the stopwatch at the same moment.','Sprint through the second cone. Rest 2 minutes between tries. Do 3 and log the fastest.'],
+   cues:['Same start every time, so the test is fair','Run through the cone, not to it','Rest fully between tries'],score:{type:'time',unit:'seconds'}},
+  {id:'sp_dribble',pos:'speed',name:'Speed Dribble 20',mins:10,ages:[9,18],need:'A ball, 2 cones 20 meters apart, a phone stopwatch',fixes:['st_pace','st_touch'],note:SPEED_NOTE,
+   steps:['Dribble from one cone to the other as fast as you can while keeping control.','Push the ball a few steps ahead with your laces, then catch up to it.','The ball has to stop within a step of the last cone. Rest 1 to 2 minutes between tries and log the fastest.'],
+   cues:['Laces, toe down, push it ahead','At top speed, touch it every 3 or 4 steps','Eyes up between touches'],score:{type:'time',unit:'seconds'}},
+  {id:'sp_shuttle',pos:'speed',name:'5-10-5 Shuttle',mins:10,ages:[9,18],need:'3 cones 5 meters apart in a line, a phone stopwatch',fixes:['st_pace','gk_across','st_press'],note:SPEED_NOTE,
+   steps:['Start at the middle cone in a low stance.','Sprint 5 meters to one side and touch the line, sprint 10 meters to the far cone and touch it, then sprint back through the middle.','Rest 1 to 2 minutes. Switch which way you go first each time. Log the fastest.'],
+   cues:['Stay low when you turn','Plant the outside foot and push off','Touch the line with your hand'],score:{type:'time',unit:'seconds'}},
+  {id:'sp_bounds',pos:'speed',name:'Pogo Hops and Bounds',mins:6,ages:[9,18],need:'Grass or another soft, flat surface',fixes:['st_pace','gk_dive'],note:SPEED_NOTE,
+   steps:['Pogo hops: 2 sets of 10 small, quick hops on the balls of your feet, knees almost straight.','Bounds: 2 sets of 5 big running leaps, pushing off one foot and landing on the other.','Rest 1 minute between sets. Stop when the landings get loud or wobbly.'],
+   cues:['Quiet, springy landings','Short ground contact, like the ground is hot','Drive the knee forward on each bound'],score:{type:'done'}},
+  {id:'gk_firststep',pos:'gk',name:'Explosive First Step',mins:10,ages:[10,18],need:'2 cones 3 meters either side of the goal center, a parent',fixes:['gk_across','gk_dive','gk_set'],note:SPEED_NOTE,
+   steps:['Start in your set position in the middle of the goal.','The parent points left or right. Take one powerful side step, then push off and dive to that cone.','Get up and set again as fast as you can. Rest 20 seconds between reps.'],
+   cues:['Push off the foot nearest the ball','Dive low and long, not up and short','Back up and set in under 2 seconds'],score:{type:'of',n:10,unit:'reached the cone'}},
+  {id:'y_redlight',pos:'young',name:'Red Light, Green Light',mins:8,ages:[4,8],need:'A ball and a parent',fixes:['y_kickaway','y_farball'],note:YOUNG_NOTE,
+   steps:['He dribbles around the yard while you call out the lights.','Green light: dribble fast. Yellow light: tiny, slow touches. Red light: stop the ball with the bottom of your foot.','Add silly lights: purple means weaker foot only, blue means turn around.'],
+   cues:['Little touches keep the ball close','Foot on top of the ball to stop it','Eyes up so you can see where you are going'],score:{type:'of',n:10,unit:'stops under control'}},
+  {id:'y_sharks',pos:'young',name:'Shark Attack',mins:8,ages:[4,8],need:'A ball, 4 cones or shoes for a box, a parent as the shark',fixes:['y_kickaway','y_farball','y_watching'],note:YOUNG_NOTE,
+   steps:['Make a box about 10 big steps across. He starts on one side with the ball.','You are the shark in the middle. He dribbles to the other side without losing the ball.','Start as a slow shark and speed up as he gets better. Swap roles sometimes.'],
+   cues:['Keep the ball close when the shark is near','Look for the open space and go there','Change direction to escape'],score:{type:'of',n:10,unit:'safe crossings'}},
+  {id:'y_bodyparts',pos:'young',name:'Body Part Stop',mins:6,ages:[4,8],need:'A ball and a parent',fixes:['y_farball'],note:YOUNG_NOTE,
+   steps:['He dribbles around. You call out a body part: foot, knee, bottom, elbow, nose!','He stops the ball and touches it with that body part as fast as he can.','Count out loud to make it a race.'],
+   cues:['Stop the ball first, then touch it','Keep it close so you can stop it fast','Laugh at the silly ones'],score:{type:'of',n:10,unit:'quick stops'}},
+  {id:'y_toetaps',pos:'young',name:'Toe Taps',mins:5,ages:[4,10],need:'A ball',fixes:['y_onefoot'],note:YOUNG_NOTE,
+   steps:['Stand with the ball in front of you.','Tap the top of the ball with the bottom of one foot, then the other, like a little dance.','Count the taps in 30 seconds and try to beat your record.'],
+   cues:['Light taps on top of the ball','Stay on your toes','Arms out for balance'],score:{type:'count',unit:'taps in 30 seconds'}},
+  {id:'y_slalom',pos:'young',name:'Cone Slalom',mins:8,ages:[4,10],need:'5 cones or shoes in a line, a ball',fixes:['y_onefoot','y_farball'],note:YOUNG_NOTE,
+   steps:['Put 5 cones in a line, about two big steps apart.','Dribble in and out of the cones to the end, then back.','Use the inside and outside of both feet. A clean run means no cones touched.'],
+   cues:['Small touches around each cone','Use both feet','Look up between touches'],score:{type:'of',n:5,unit:'clean runs'}},
+  {id:'y_monster',pos:'young',name:'Shoot the Monster',mins:8,ages:[4,8],need:'Balls, a goal or 2 cones, a parent as the monster',fixes:[],note:YOUNG_NOTE,
+   steps:['You stand in goal as a silly monster.','He dribbles up and shoots. When he scores, the monster falls over. Ham it up.','Bonus points for the weaker foot or for hitting a corner.'],
+   cues:['Look at the goal, then the ball','Kick with your laces for power','Score, then get the ball back fast'],score:{type:'of',n:10,unit:'goals'}},
+  {id:'y_tail',pos:'young',name:'Tail Tag',mins:6,ages:[4,10],need:'2 scarves or shirts to tuck in as tails, a parent',fixes:['y_stopped','y_watching'],note:YOUNG_NOTE,
+   steps:['Tuck a tail into the back of his waistband, and one into yours.','Chase each other in a small area and try to grab the other tail.','Play 3 rounds of about 30 seconds, with a short rest in between.'],
+   cues:['Quick feet to dodge','Change direction fast','Never stop chasing'],score:{type:'count',unit:'tails grabbed'}},
+  {id:'y_animals',pos:'young',name:'Animal Moves',mins:6,ages:[4,8],need:'Open space',fixes:['y_stopped'],note:YOUNG_NOTE,
+   steps:['Race from one line to another, moving like animals.','Bear crawl, frog jumps, bunny hops, crab walk, and a cheetah sprint.','You call the animal and he moves like it. Always finish with a cheetah sprint.'],
+   cues:['Strong arms for the bear crawl','Soft landings for frog jumps','Cheetahs run on their toes'],score:{type:'done'}},
+  {id:'y_softcatch',pos:'young',name:'Soft Catch',mins:6,ages:[4,8],need:'A soft ball or beach ball, a parent',fixes:[],note:YOUNG_NOTE,
+   steps:['Toss a soft ball to him from a few steps away.','He catches it with two hands and hugs it into his tummy.','Mix in rolling balls to scoop up and gentle throws to the side.'],
+   cues:['Watch the ball into your hands','Hands ready, thumbs close together','Hug the ball after you catch it'],score:{type:'of',n:10,unit:'catches'}},
+  {id:'y_spread',pos:'young',name:'Find the Open Spot',mins:6,ages:[5,9],need:'4 cones or shoes, a ball, a parent',fixes:['y_bunch'],note:YOUNG_NOTE,
+   steps:['Put 4 cones in a big square. These are the open spots.','Stand near one cone with the ball. He runs to the spot farthest from you and calls your name.','Pass him the ball when he gets there. Move to a new cone and play again.'],
+   cues:['Run away from the crowd','Call for the ball','Face the ball when you get there'],score:{type:'of',n:10,unit:'right spots'}},
+  {id:'y_nextplay',pos:'young',name:'Next Play!',mins:5,ages:[4,12],need:'Any game you play together',fixes:['y_upset'],note:YOUNG_NOTE,
+   steps:['Pick any game you are already playing together.','Whenever someone makes a mistake, you included, they shout “Next play!” and jump straight back in.','Make a few silly mistakes on purpose so he sees you bounce back too.'],
+   cues:['Mistakes mean you are trying','Shout it and smile','The next play is the important one'],score:{type:'done'}}
 ];
 const ERR=Object.fromEntries(ERRORS.map(e=>[e.id,e]));
 const WELL=Object.fromEntries(WELLS.map(w=>[w.id,w]));
 const DRILL=Object.fromEntries(DRILLS.map(d=>[d.id,d]));
+/* Ages each original drill suits, so a 6-year-old and an 11-year-old see different lists. */
+const DRILL_AGES={gk_wcatch:[8,18],gk_scoop:[7,18],gk_setstep:[9,18],gk_collapse:[9,18],gk_angle:[10,18],gk_rebound:[9,18],gk_highball:[10,18],gk_1v1:[10,18],gk_dist:[9,18],gk_backpass:[10,18],gk_reaction:[8,18],gk_voice:[9,18],
+  st_wall2:[8,18],st_corners:[7,18],st_weak:[8,18],st_cool1v1:[8,18],st_turn:[9,18],st_runs:[10,18],st_onetouch:[9,18],st_shield:[8,18],st_press:[9,18],st_decide:[8,18],both_juggle:[8,18],both_feet:[6,18]};
+DRILLS.forEach(d=>{if(!d.ages)d.ages=DRILL_AGES[d.id]||[9,18];});
+/* Things a player can choose to work on. Each lists drills in order of preference; age filtering picks the right ones. */
+const GOALS=[
+  {id:'speed',label:'Speed',why:'Short, all-out efforts with full rest, at the start of a session while he is fresh.',drills:['sp_falling','sp_reaction','sp_flying','sp_dribble','sp_shuttle','sp_form','sp_bounds','gk_firststep','y_tail','y_animals']},
+  {id:'shooting',label:'Shooting',why:'Lots of shots at a target, with both feet.',drills:['st_corners','st_onetouch','st_weak','st_cool1v1','y_monster']},
+  {id:'dribbling',label:'Dribbling',why:'Close control first, then speed with the ball.',drills:['sp_dribble','st_cool1v1','st_shield','y_redlight','y_sharks','y_slalom']},
+  {id:'weakfoot',label:'Weak foot',why:'A few minutes every session using only the weaker foot.',drills:['st_weak','y_toetaps','y_slalom','st_wall2']},
+  {id:'touch',label:'First touch',why:'Lots of touches on the ball, every day.',drills:['st_wall2','both_juggle','y_bodyparts','gk_backpass']},
+  {id:'hands',label:'Keeper hands',why:'Clean catches every time, starting easy and getting harder.',drills:['gk_wcatch','gk_scoop','gk_reaction','gk_highball','y_softcatch']},
+  {id:'diving',label:'Diving',why:'Technique first on soft grass, then add speed.',drills:['gk_collapse','gk_setstep','gk_firststep']},
+  {id:'confidence',label:'Confidence',why:'Bounce back from mistakes and enjoy the game.',drills:['y_nextplay','st_cool1v1']}
+];
+const GOAL=Object.fromEntries(GOALS.map(g=>[g.id,g]));
+const SPEED_RULES=[
+  'Twice a week, with at least one day off in between. Avoid the day before a game if you can.',
+  'About 20 minutes. Always start with the warm-up, and do the program before any other drills, while he is fresh.',
+  'Every rep is short and all-out. Walk back and rest fully before the next one.',
+  'Stop a drill early if he is getting slower or sloppy. Tired sprinting does not make kids faster.',
+  'He takes the 20 m sprint test in weeks 1, 4 and 6, so you can both see the progress.',
+  'At this age most speed comes from better technique, coordination and quick reactions. No weights needed.',
+  'If his knees or heels hurt, skip the sprints and jumps and check with his doctor. Growing kids often get sore there.'
+];
+/* Each session lists [drill id, how much]. */
+const PROGRAMS=[{id:'speed6',goal:'speed',ages:[9,14],title:'6-week speed program',
+  summary:'Two 20-minute sessions a week for faster starts, quicker reactions and a higher top speed, with a sprint test to track progress.',
+  weeks:[
+    [{name:'Session A',focus:'Baseline test and running form',items:[['sp_warmup','5 min'],['sp_test','3 tries, log the fastest'],['sp_form','2 rounds'],['sp_reaction','8 reps']]},
+     {name:'Session B',focus:'Quick feet and fast starts',items:[['sp_warmup','5 min'],['both_feet','2 runs of each pattern'],['sp_falling','6 reps'],['sp_reaction','6 reps']]}],
+    [{name:'Session A',focus:'Acceleration',items:[['sp_warmup','5 min'],['sp_form','2 rounds'],['sp_falling','6 reps'],['sp_dribble','4 reps']]},
+     {name:'Session B',focus:'Change of direction',items:[['sp_warmup','5 min'],['sp_bounds','1 round'],['sp_shuttle','4 reps'],['gk_firststep','4 each side']]}],
+    [{name:'Session A',focus:'Top speed',items:[['sp_warmup','5 min'],['sp_falling','4 reps'],['sp_flying','3 reps'],['sp_reaction','6 reps']]},
+     {name:'Session B',focus:'Speed with the ball',items:[['sp_warmup','5 min'],['sp_bounds','1 round'],['sp_dribble','5 reps'],['sp_shuttle','4 reps']]}],
+    [{name:'Session A',focus:'Check-in test and reactions',items:[['sp_warmup','5 min'],['sp_test','3 tries, log the fastest'],['sp_reaction','8 reps'],['both_feet','2 runs of each pattern']]},
+     {name:'Session B',focus:'Explosive starts',items:[['sp_warmup','5 min'],['sp_form','1 round'],['sp_falling','6 reps'],['gk_firststep','5 each side']]}],
+    [{name:'Session A',focus:'Top speed',items:[['sp_warmup','5 min'],['sp_bounds','2 rounds'],['sp_flying','4 reps'],['sp_shuttle','3 reps']]},
+     {name:'Session B',focus:'Game speed',items:[['sp_warmup','5 min'],['sp_reaction','6 reps'],['sp_dribble','5 reps'],['sp_shuttle','4 reps']]}],
+    [{name:'Session A',focus:'Put it all together',items:[['sp_warmup','5 min'],['sp_falling','4 reps'],['sp_flying','4 reps'],['gk_firststep','5 each side']]},
+     {name:'Session B',focus:'Final test',items:[['sp_warmup','5 min'],['sp_form','1 round'],['sp_test','3 tries, log the fastest'],['sp_reaction','6 reps, just for fun']]}]
+  ]}];
+const PROGRAM=Object.fromEntries(PROGRAMS.map(p=>[p.id,p]));
 const ZONES=['TL','TC','TR','BL','BC','BR'];
 const ZONE_LABEL={TL:'Top left',TC:'Top middle',TR:'Top right',BL:'Bottom left',BC:'Bottom middle',BR:'Bottom right',U:'Not sure where'};
-const POS_NAME={gk:'Goalkeeper',st:'Striker',both:'Keeper + Striker'};
-const POS_SHORT={gk:'GK',st:'ST',both:'GK + ST'};
+const POS_NAME={gk:'Goalkeeper',st:'Striker',both:'Keeper + Striker',speed:'Speed and agility',young:'Game for ages 5 to 8',all:'Plays everywhere'};
+const POS_SHORT={gk:'GK',st:'ST',both:'GK + ST',speed:'Speed',young:'Ages 5-8',goal:'His goal'};
 const RES_NAME={W:'Win',L:'Loss',D:'Draw'};
-const RATE_NAME={effort:'Effort',confidence:'Confidence',overall:'Overall'};
+const RATE_NAME={fun:'Fun',effort:'Effort',confidence:'Confidence',overall:'Overall'};
 const COMPS=['League','Cup','Tournament','Friendly','Scrimmage'];
 const SHOT_RES=[{id:'goal',label:'Goal'},{id:'on',label:'Saved'},{id:'off',label:'Missed'},{id:'blocked',label:'Blocked'}];
-const K_GAME='ksl:gameDraft', K_SESS='ksl:sessionDraft';
+const K_GAME='ksl:gameDraft', K_SESS='ksl:sessionDraft', K_PLAYER='ksl:player';
 const K_BOARD='ksl:boardDraft';
 const K_DATA='ksl:data:v1', K_BACKUP='ksl:lastBackup', K_SNOOZE='ksl:backupSnooze', K_NOINSTALL='ksl:hideInstall';
 const NO_DB='This browser is blocking storage, so nothing can be saved. Turn off Private Browsing, or open the app from your home screen.';
@@ -138,8 +263,8 @@ const IS_INSTALLED=window.navigator.standalone===true||(window.matchMedia&&windo
 
 /* ---------- State ---------- */
 const S={db:null,checked:false,canWrite:false,
-  profile:defaultProfile(),
-  games:[],sessions:[],gotGames:false,gotSessions:false,
+  profile:defaultProfile(),players:[],pid:lsGet(K_PLAYER),pfNew:false,
+  allGames:[],allSessions:[],games:[],sessions:[],gotGames:false,gotSessions:false,
   view:'home',arg:null,gd:null,gEdit:null,gResumed:false,sd:null,sEdit:null,sResumed:false,pf:null,
   drillPos:'all',allSess:false,pendingImport:null,
   boards:[],gotBoards:false,bd:null,bEdit:null,bStep:0,bTool:'move',bSel:null,bHist:[],drag:null,dragSnap:null,playing:false,playPos:'all'};
@@ -162,34 +287,67 @@ function lsSet(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.
 function getPath(o,p){return p.split('.').reduce((a,k)=>a==null?a:a[k],o);}
 function setPath(o,p,v){const ks=p.split('.');let a=o;for(let i=0;i<ks.length-1;i++){if(a[ks[i]]==null||typeof a[ks[i]]!=='object')a[ks[i]]={};a=a[ks[i]];}a[ks[ks.length-1]]=v;}
 
-function defaultProfile(){return {name:'',team:'',preferred:'gk',weeklyGoal:3};}
+function defaultProfile(){return {name:'',team:'',preferred:'gk',weeklyGoal:3,birthYear:null,goals:[],program:null};}
 function newGame(){
-  const st=S&&S.profile&&S.profile.preferred==='st';
-  return {date:todayISO(),opponent:'',venue:'home',comp:'League',us:0,them:0,played:{gk:!st,st:!!st},gkMins:'',stMins:'',
-    gk:{saves:0,catches:0,drops:0,high:0,distGood:0,distBad:0},zones:[],st:{assists:0,chances:0},shots:[],pending:null,
-    errors:{},wells:[],ratings:{effort:0,confidence:0,overall:0},great:'',work:'',notes:''};
+  const young=isYoung(),pref=S.profile.preferred;
+  return {date:todayISO(),opponent:'',venue:'home',comp:'League',us:0,them:0,
+    played:young?{young:true}:{gk:pref==='gk',st:pref==='st'},gkMins:'',stMins:'',
+    gk:{saves:0,catches:0,drops:0,high:0,distGood:0,distBad:0},zones:[],st:{assists:0,chances:0},young:{goals:0,beat:0,won:0},shots:[],pending:null,
+    errors:{},wells:[],ratings:young?{fun:0,effort:0}:{effort:0,confidence:0,overall:0},great:'',work:'',notes:''};
 }
 function normGame(g){
-  const b=newGame(), o=Object.assign(b,g);
+  const base=newGame(),o=Object.assign(newGame(),g);
   o.played=Object.assign({gk:false,st:false},g.played||{});
-  o.gk=Object.assign(newGame().gk,g.gk||{});
-  o.st=Object.assign({assists:0,chances:0},g.st||{});
+  o.gk=Object.assign(base.gk,g.gk||{});
+  o.st=Object.assign(base.st,g.st||{});
+  o.young=Object.assign(base.young,g.young||{});
   o.zones=Array.isArray(g.zones)?g.zones:[];
   o.shots=Array.isArray(g.shots)?g.shots:[];
   o.errors=Object.assign({},g.errors||{});
   o.wells=Array.isArray(g.wells)?g.wells.slice():[];
-  o.ratings=Object.assign({effort:0,confidence:0,overall:0},g.ratings||{});
+  o.ratings=Object.assign(o.played.young?{fun:0,effort:0}:{effort:0,confidence:0,overall:0},g.ratings||{});
   if(o.gkMins==null)o.gkMins='';
   if(o.stMins==null)o.stMins='';
   return o;
 }
-function mkItem(id){return {drillId:id,score:'',outOf:DRILL[id].score.n||''};}
+function mkItem(id,dose){return {drillId:id,score:'',outOf:DRILL[id].score.n||'',dose:dose||''};}
 function newSession(id){return {date:todayISO(),minutes:'',items:id?[mkItem(id)]:[],feel:0,notes:''};}
 function normSession(s){
   const o=Object.assign(newSession(),s);
-  o.items=(Array.isArray(s.items)?s.items:[]).filter(i=>DRILL[i.drillId]).map(i=>({drillId:i.drillId,score:i.score==null?'':i.score,outOf:i.outOf==null?(DRILL[i.drillId].score.n||''):i.outOf}));
+  o.items=(Array.isArray(s.items)?s.items:[]).filter(i=>DRILL[i.drillId]).map(i=>({drillId:i.drillId,score:i.score==null?'':i.score,outOf:i.outOf==null?(DRILL[i.drillId].score.n||''):i.outOf,dose:i.dose||''}));
   if(o.minutes==null)o.minutes='';
   return o;
+}
+
+/* ---------- Players and ages ---------- */
+const THIS_YEAR=new Date().getFullYear();
+function ageOf(p){const y=+((p||S.profile||{}).birthYear);return y>1900?THIS_YEAR-y:null;}
+function isYoung(p){const a=ageOf(p);return a!=null&&a<=8;}
+function fitsAge(d,p){const a=ageOf(p),r=d.ages||[9,18];return a==null?r[1]>8:a>=r[0]&&a<=r[1];}
+function applyPlayer(){
+  if(!S.players.some(p=>p.id===S.pid))S.pid=S.players.length?S.players[0].id:null;
+  const p=S.players.find(x=>x.id===S.pid);
+  S.profile=Object.assign(defaultProfile(),p?clone(p):{});
+  S.games=S.allGames.filter(g=>g.playerId===S.pid);
+  S.sessions=S.allSessions.filter(x=>x.playerId===S.pid);
+}
+function playerDoc(){const p=S.players.find(x=>x.id===S.pid);return p?clone(p):null;}
+async function writePlayer(p){const d=clone(p);delete d.id;await S.db.doc('players/'+p.id).set(d);}
+function whoBar(always){
+  if(!S.players.length||(!always&&S.players.length<2))return '';
+  return `<div class="who" role="group" aria-label="Choose a player">${S.players.map(p=>{const on=p.id===S.pid,a=ageOf(p);return `<button type="button" class="whochip ${on?'on':''}" data-a="pickPlayer" data-id="${esc(p.id)}" aria-pressed="${on}">${esc(p.name||'Player')}${a!=null?`<small>${a}</small>`:''}</button>`;}).join('')}${S.canWrite&&always?'<button type="button" class="whochip add" data-a="addPlayer">+ Add player</button>':''}</div>`;
+}
+/* The first version kept one player and no playerId; give that data a player record. */
+function migrate(db){
+  const all=db.exportAll(),players=all.players||{},now=new Date().toISOString();
+  let ids=Object.keys(players);
+  if(!ids.length){
+    const prof=(all.meta&&all.meta.profile)||{};
+    db.collection('players').doc('p1').set(Object.assign(defaultProfile(),prof,{createdAt:now})).catch(()=>{});
+    ids=['p1'];
+  }
+  const first=ids.slice().sort((a,b)=>(((players[a]||{}).createdAt)||'').localeCompare(((players[b]||{}).createdAt)||''))[0];
+  ['games','sessions'].forEach(c=>Object.keys(all[c]||{}).forEach(id=>{const d=all[c][id];if(d&&!d.playerId)db.collection(c).doc(id).set(Object.assign({},d,{playerId:first})).catch(()=>{});}));
 }
 
 /* ---------- Derived numbers ---------- */
@@ -222,6 +380,7 @@ function drillLog(id){
 function scoreText(d,it){
   if(d.score.type==='done'||it.score==null||it.score==='')return 'Done';
   if(d.score.type==='of')return it.score+' of '+(it.outOf||d.score.n);
+  if(d.score.type==='time')return (+it.score).toFixed(2)+' s';
   return it.score+' '+d.score.unit;
 }
 function scoreVal(d,it){
@@ -230,23 +389,41 @@ function scoreVal(d,it){
   return +it.score;
 }
 function lastLabel(d){const l=drillLog(d.id);if(!l.length)return 'Not tried yet';const it=l[l.length-1];return 'Last: '+scoreText(d,it)+', '+fmtDate(it.date,{month:'short',day:'numeric'});}
-function pickDrills(tag,n){
-  return DRILLS.filter(d=>d.fixes.includes(tag)).map(d=>({d,last:(drillLog(d.id).slice(-1)[0]||{}).date||''}))
-    .sort((a,b)=>a.last.localeCompare(b.last)).slice(0,n).map(x=>x.d);
-}
+function byLeastRecent(list){return list.map(d=>({d,last:(drillLog(d.id).slice(-1)[0]||{}).date||''})).sort((a,b)=>a.last.localeCompare(b.last)).map(x=>x.d);}
+function pickDrills(tag,n){return byLeastRecent(DRILLS.filter(d=>d.fixes.includes(tag)&&fitsAge(d))).slice(0,n);}
+function goalDrills(gid,n){const G=GOAL[gid];return G?byLeastRecent(G.drills.map(id=>DRILL[id]).filter(d=>d&&fitsAge(d))).slice(0,n):[];}
 function tallyErr(list){const t={};list.forEach(g=>{for(const [k,v] of Object.entries(g.errors||{})){if(ERR[k]&&+v>0)t[k]=(t[k]||0)+(+v);}});return t;}
 function focusList(){
-  const gs=games().slice(0,3),tally={},raw={};
+  const items=[],gs=games().slice(0,3),tally={},raw={};
+  (S.profile.goals||[]).forEach(gid=>{
+    const G=GOAL[gid],ds=goalDrills(gid,2);
+    if(G&&ds.length&&!(gid==='speed'&&progOf()))items.push({pos:'goal',area:'',title:G.label,why:G.why,drills:ds});
+  });
   gs.forEach((g,i)=>{for(const [k,v] of Object.entries(g.errors||{})){if(!ERR[k]||!(+v>0))continue;raw[k]=(raw[k]||0)+(+v);tally[k]=(tally[k]||0)+(+v)*(i===0?1.5:1);}});
-  const top=Object.keys(tally).sort((a,b)=>tally[b]-tally[a]).slice(0,3);
-  if(top.length)return {fromGames:true,n:gs.length,items:top.map(k=>({pos:ERR[k].pos,area:ERR[k].area,title:ERR[k].label,
-    why:'Happened '+raw[k]+' '+plural(raw[k],'time','times')+' in the last '+(gs.length===1?'game':gs.length+' games')+'.',drills:pickDrills(k,2)}))};
-  const gk=[{pos:'gk',area:'Handling',title:'Safe hands',why:'Clean catches stop rebounds and second chances.',drills:[DRILL.gk_wcatch,DRILL.gk_scoop]},
-            {pos:'gk',area:'Set position',title:'Set before every shot',why:'Being still when the ball is struck makes every save easier.',drills:[DRILL.gk_setstep]}];
-  const st=[{pos:'st',area:'Finishing',title:'Hit the corners',why:'Low shots into the corners are the hardest for keepers to reach.',drills:[DRILL.st_corners,DRILL.st_weak]}];
-  return {fromGames:false,n:0,items:S.profile.preferred==='st'?st.concat(gk.slice(0,1)):gk.concat(st)};
+  Object.keys(tally).sort((a,b)=>tally[b]-tally[a]).forEach(k=>{
+    if(items.length>=4)return;const ds=pickDrills(k,2);if(!ds.length)return;
+    items.push({pos:ERR[k].pos,area:ERR[k].area,title:ERR[k].label,why:'Happened '+raw[k]+' '+plural(raw[k],'time','times')+' in the last '+(gs.length===1?'game':gs.length+' games')+'.',drills:ds});
+  });
+  const fromGames=items.some(i=>i.pos!=='goal');
+  if(!fromGames){
+    let starter;
+    if(isYoung())starter=[{pos:'young',area:'Dribbling',title:'Keep the ball close',why:'Little touches are the base of everything at this age.',drills:[DRILL.y_redlight,DRILL.y_sharks]},
+                           {pos:'young',area:'Shooting',title:'Shoot and score',why:'Scoring is the most fun part of soccer. Let him score a lot.',drills:[DRILL.y_monster]}];
+    else{
+      const gk=[{pos:'gk',area:'Handling',title:'Safe hands',why:'Clean catches stop rebounds and second chances.',drills:[DRILL.gk_wcatch,DRILL.gk_scoop]},
+                {pos:'gk',area:'Set position',title:'Set before every shot',why:'Being still when the ball is struck makes every save easier.',drills:[DRILL.gk_setstep]}];
+      const st=[{pos:'st',area:'Finishing',title:'Hit the corners',why:'Low shots into the corners are the hardest for keepers to reach.',drills:[DRILL.st_corners,DRILL.st_weak]}];
+      starter=S.profile.preferred==='st'?st.concat(gk.slice(0,1)):gk.concat(st);
+    }
+    starter.forEach(x=>{x.drills=x.drills.filter(d=>fitsAge(d));if(x.drills.length&&items.length<4)items.push(x);});
+  }
+  return {fromGames,n:gs.length,items};
 }
 function focusDrillIds(){return [...new Set(focusList().items.flatMap(i=>i.drills.map(d=>d.id)))];}
+function progOf(p){const pr=(p||S.profile).program;return pr&&PROGRAM[pr.id]?pr:null;}
+function progSessions(P){const out=[];P.weeks.forEach((w,wi)=>w.forEach((x,si)=>out.push(Object.assign({key:'w'+(wi+1)+'s'+(si+1),week:wi+1},x))));return out;}
+function progNext(){const pr=progOf();if(!pr)return null;return progSessions(PROGRAM[pr.id]).find(x=>!(pr.done||{})[x.key])||null;}
+function sprintTests(){return drillLog('sp_test').filter(x=>x.score!=null&&x.score!=='').map(x=>+x.score);}
 
 /* ---------- Small renderers ---------- */
 function tile(l,v,c){return `<div class="tile ${c||''}"><span class="num">${esc(v)}</span><span class="lbl">${esc(l)}</span></div>`;}
@@ -269,7 +446,9 @@ function sessRow(s){
   const names=(s.items||[]).map(it=>DRILL[it.drillId]&&DRILL[it.drillId].name).filter(Boolean);
   return `<button class="row" data-a="editSession" data-id="${esc(s.id)}"><span class="row-main"><span class="row-title">${esc(fmtDate(s.date))}</span><span class="row-sub">${esc(names.join(', ')||'Training')}${s.example?'<span class="tag ex">Example</span>':''}</span></span><span class="row-score sm">${s.minutes?esc(s.minutes)+'<small> min</small>':''}</span></button>`;
 }
-function emptyGames(){return `<div class="empty"><p><b>No games logged yet.</b></p><p>Right after a game, tap Log a game. It takes about two minutes: score, positions, saves, shots, and the mistakes you noticed.</p></div>`;}
+function emptyGames(){return `<div class="empty"><p><b>No games logged yet.</b></p><p>Right after a game, tap Log a game. It takes about two minutes: the score, how he played, and what you noticed.</p></div>`;}
+function tallyChip(e,n){return `<span class="tally ${n?'on':''}"><button type="button" data-a="errAdd" data-id="${e.id}" aria-label="${esc(e.label)}${n?', '+n+' so far':''}">${esc(e.label)}${n?`<b>\u00d7${n}</b>`:''}</button>${n?`<button type="button" class="minus" data-a="errSub" data-id="${e.id}" aria-label="Remove one: ${esc(e.label)}">\u2212</button>`:''}</span>`;}
+function errTag(k){return ERR[k].pos==='young'?'':`<span class="tag ${ERR[k].pos}">${POS_SHORT[ERR[k].pos]}</span>`;}
 function dbNotice(){return (S.db||!S.checked)?'':`<div class="note warn"><span>${esc(NO_DB)}</span></div>`;}
 function goalCells(zs,picker){
   const c={};zs.forEach(z=>{c[z.z]=(c[z.z]||0)+1;});
@@ -293,7 +472,7 @@ function legend(){return `<div class="legend">${SHOT_RES.map(r=>`<span><i class=
 function bars(items,o){
   const W=320,H=140,L=32,R=6,T=16,B=20,n=Math.max(items.length,1),bw=(W-L-R)/n,ph=H-T-B;
   let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label)}">`;
-  [0,50,100].forEach(v=>{const y=T+ph*(1-v/o.max);s+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text x="${L-5}" y="${y+3.5}" text-anchor="end">${v}${o.unit}</text>`;});
+  [0,o.max/2,o.max].forEach(v=>{const y=T+ph*(1-v/o.max);s+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text x="${L-5}" y="${y+3.5}" text-anchor="end">${Number.isInteger(v)?v:v.toFixed(1)}${o.unit}</text>`;});
   items.forEach((it,i)=>{
     const cx=L+bw*i+bw/2,w=Math.min(28,bw*.62);
     if(it.value==null)s+=`<text x="${cx}" y="${T+ph-4}" text-anchor="middle">-</text>`;
@@ -302,38 +481,55 @@ function bars(items,o){
   });
   return s+'</svg>';
 }
-function spark(vals,max){
-  const W=120,H=32,p=4,mx=max||Math.max(...vals,1),mn=max?0:Math.min(...vals,0);
+function spark(vals,max,label,fit){
+  const W=120,H=32,p=4,mx=max||(fit?Math.max(...vals):Math.max(...vals,1)),mn=max?0:(fit?Math.min(...vals):Math.min(...vals,0));
   const xs=i=>p+(W-2*p)*(vals.length===1?.5:i/(vals.length-1));
   const ys=v=>H-p-(H-2*p)*((v-mn)/((mx-mn)||1));
   const pts=vals.map((v,i)=>xs(i).toFixed(1)+','+ys(v).toFixed(1)),last=vals.length-1;
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Scores over time, latest ${vals[last]}${max?' percent':''}"><path class="area" d="M${xs(0).toFixed(1)},${H-p} L${pts.join(' L')} L${xs(last).toFixed(1)},${H-p} Z"/><path class="ln" d="M${pts.join(' L')}"/><circle cx="${xs(last).toFixed(1)}" cy="${ys(vals[last]).toFixed(1)}" r="3"/></svg>`;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Scores over time, latest ${label||vals[last]+(max?' percent':'')}"><path class="area" d="M${xs(0).toFixed(1)},${H-p} L${pts.join(' L')} L${xs(last).toFixed(1)},${H-p} Z"/><path class="ln" d="M${pts.join(' L')}"/><circle cx="${xs(last).toFixed(1)}" cy="${ys(vals[last]).toFixed(1)}" r="3"/></svg>`;
 }
 
 /* ---------- Views ---------- */
 function heroHTML(){
-  const p=S.profile,pref=p.preferred==='st'?'st':'gk';
+  const p=S.profile,a=ageOf(),pref=p.preferred,meta=[a!=null?'Age '+a:'',p.team||''].filter(Boolean).join(' · ');
+  const badges=isYoung()||pref==='all'?'<span class="badge all">Plays everywhere</span>'
+    :`<span class="badge gk">Goalkeeper${pref==='gk'?' · favorite':''}</span><span class="badge st">Striker${pref==='st'?' · favorite':''}</span>`;
   return `<section class="hero"><svg class="hero-lines" viewBox="0 0 120 120" aria-hidden="true"><circle cx="120" cy="60" r="36"/><circle cx="120" cy="60" r="2"/><path d="M120 0V120"/></svg>
   <p class="eyebrow">Player</p>
   <h1 class="hero-name">${p.name?esc(p.name):'Your player'}</h1>
-  ${p.team?`<p class="hero-team">${esc(p.team)}</p>`:''}
-  ${!p.name&&S.canWrite?`<button class="hero-add" data-a="openPlayer">Add his name</button>`:''}
-  <div class="hero-pos"><span class="badge gk">Goalkeeper${pref==='gk'?' · favorite':''}</span><span class="badge st">Striker${pref==='st'?' · favorite':''}</span></div>
+  ${meta?`<p class="hero-team">${esc(meta)}</p>`:''}
+  ${(!p.name||a==null)&&S.canWrite?`<button class="hero-add" data-a="openPlayer">${p.name?'Add his birth year':'Add his name and age'}</button>`:''}
+  <div class="hero-pos">${badges}</div>
   ${S.canWrite?`<button class="hero-edit" data-a="openPlayer">Edit</button>`:''}</section>`;
 }
 function focusHTML(){
-  const f=focusList();
+  const f=focusList();if(!f.items.length)return '';
   let h=`<section class="block"><div class="block-head"><h2>Work on this week</h2><span class="sub">${f.fromGames?'From his last '+(f.n===1?'game':f.n+' games'):'Starter plan'}</span></div>`;
-  if(!f.fromGames)h+=`<p class="sub">Log a game and this list updates from the mistakes you record.</p>`;
-  f.items.forEach(it=>{h+=`<article class="focus"><p class="eyebrow"><span class="tag ${it.pos}">${POS_SHORT[it.pos]}</span>${esc(it.area)}</p><h3>${esc(it.title)}</h3><p class="muted">${esc(it.why)}</p><div class="dlinks">${it.drills.map(dlink).join('')}</div></article>`;});
+  if(!f.fromGames)h+=`<p class="sub">Log a game and this list updates from what you notice.</p>`;
+  f.items.forEach(it=>{h+=`<article class="focus"><p class="eyebrow">${it.pos==='young'?'':`<span class="tag ${it.pos}">${POS_SHORT[it.pos]}</span>`}${esc(it.area)}</p><h3>${esc(it.title)}</h3><p class="muted">${esc(it.why)}</p><div class="dlinks">${it.drills.map(dlink).join('')}</div></article>`;});
   return h+'</section>';
+}
+function programCard(){
+  if(isYoung()||!S.canWrite)return '';
+  const pr=progOf();
+  if(!pr){
+    const P=PROGRAMS.find(x=>fitsAge(x)&&(S.profile.goals||[]).indexOf(x.goal)>=0);
+    return P?`<div class="note"><span>${esc(S.profile.name||'He')} wants to get faster. Try the <b>${esc(P.title)}</b>: two 20-minute sessions a week.</span><button class="btn small" data-a="openProgram" data-id="${P.id}">See the plan</button></div>`:'';
+  }
+  const P=PROGRAM[pr.id],all=progSessions(P),done=all.filter(x=>(pr.done||{})[x.key]).length,nx=progNext(),tests=sprintTests();
+  let h=`<section class="block"><div class="block-head"><h2>${esc(P.title)}</h2><button class="link" data-a="openProgram" data-id="${P.id}">See the plan</button></div><div class="prog">`;
+  h+=`<div class="progbar" role="img" aria-label="${done} of ${all.length} sessions done"><span style="width:${Math.round(done/all.length*100)}%"></span></div>`;
+  h+=`<p class="sub">${done} of ${all.length} sessions done${tests.length?` · 20 m sprint: first ${tests[0].toFixed(2)} s, best ${Math.min(...tests).toFixed(2)} s`:''}</p>`;
+  if(nx)h+=`<p class="eyebrow"><span class="tag speed">Week ${nx.week}</span>${esc(nx.name)}</p><h3>${esc(nx.focus)}</h3><ol class="prog-items">${nx.items.map(([id,dose])=>`<li><button class="dlink" data-a="drill" data-id="${id}"><span>${esc(DRILL[id].name)}<small>${esc(dose)}</small></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ol><button class="btn primary wide" data-a="progStart">Start this session</button>`;
+  else h+=`<h3>Program complete</h3><p>All ${all.length} sessions done. Compare his sprint tests on the Progress tab.</p>`;
+  return h+'</div></section>';
 }
 function renderHome(){
   const p=S.profile,gs=games(),goal=+p.weeklyGoal||3,wc=weekCount(0),streak=weekStreak(),last=gs[0];
-  const hasEx=S.games.some(g=>g.example)||S.sessions.some(s=>s.example);
-  const real=S.games.filter(g=>!g.example).length+S.sessions.filter(s=>!s.example).length;
-  let h=heroHTML()+dbNotice()+installNote();
-  if(S.canWrite&&!S.games.length&&!S.sessions.length)h+=`<div class="welcome"><h3>Welcome</h3><p>Add his name and team, then log his next game. The app suggests drills from the mistakes you record.</p><div class="note-btns"><button class="btn primary small" data-a="openPlayer">Set up player</button><button class="btn small" data-a="loadExamples">Show me with example data</button></div></div>`;
+  const hasEx=S.games.some(g=>g.example)||S.sessions.some(x=>x.example);
+  const real=S.allGames.filter(g=>!g.example).length+S.allSessions.filter(x=>!x.example).length;
+  let h=whoBar(true)+heroHTML()+dbNotice()+installNote();
+  if(S.canWrite&&!S.games.length&&!S.sessions.length)h+=`<div class="welcome"><h3>${p.name?'Ready for '+esc(p.name):'Welcome'}</h3><p>${p.name&&ageOf()!=null?'Log his next game and the app suggests drills that fit his age and what you see.':'Add his name and birth year, then log his next game. The app suggests drills that fit his age and what you see.'}</p><div class="note-btns"><button class="btn primary small" data-a="openPlayer">${p.name&&ageOf()!=null?'Edit player':'Set up player'}</button><button class="btn small" data-a="loadExamples">Show me with example data</button></div></div>`;
   if(hasEx)h+=`<div class="note"><span>Entries marked <span class="tag ex">Example</span> are samples so you can see how everything fits together.</span>${S.canWrite?`<button class="btn small" data-a="clearExamples" data-confirm="Tap again to delete">Delete examples</button>`:''}</div>`;
   if(S.canWrite&&real>=3&&backupDue())h+=`<div class="note"><span>Your logs are saved only on this phone. Save a backup copy to Files or email it to yourself.</span><div class="note-btns"><button class="btn small" data-a="exportBackup">Back up now</button><button class="btn small" data-a="snoozeBackup">Later</button></div></div>`;
   h+=`<div class="strip">
@@ -341,13 +537,13 @@ function renderHome(){
     <div class="cell"><span class="num">${streak}</span><span class="lbl">${plural(streak,'Week','Weeks')} in a row hitting the goal</span></div>
     <div class="cell">${last?`<span class="num res-txt-${result(last)}">${result(last)} ${+last.us||0}-${+last.them||0}</span><span class="lbl">Last game, vs ${esc(last.opponent||'opponent')}</span>`:`<span class="num">-</span><span class="lbl">No games logged yet</span>`}</div></div>`;
   if(S.canWrite)h+=`<div class="actions"><button class="btn primary big" data-a="newGame">Log a game<small>Right after the final whistle</small></button><button class="btn big" data-a="newSession">Log training<small>Drills and scores</small></button></div>`;
-  h+=focusHTML();
+  h+=programCard()+focusHTML();
   h+=`<section class="block"><div class="block-head"><h2>Recent games</h2>${gs.length>3?`<button class="link" data-a="go" data-v="games">All ${gs.length} games</button>`:''}</div>${S.db&&!S.gotGames?'<p class="muted">Loading games...</p>':gs.length?`<div class="list">${gs.slice(0,3).map(gameRow).join('')}</div>`:emptyGames()}</section>`;
   return `<div class="view">${h}</div>`;
 }
 function renderGames(){
   const gs=games();
-  let h=`<div class="bar"><h1>Games</h1>${S.canWrite?`<button class="btn primary small" data-a="newGame">Log a game</button>`:''}</div>`+dbNotice();
+  let h=whoBar(false)+`<div class="bar"><h1>Games</h1>${S.canWrite?`<button class="btn primary small" data-a="newGame">Log a game</button>`:''}</div>`+dbNotice();
   if(S.db&&!S.gotGames)h+='<p class="muted">Loading games...</p>';
   else if(!gs.length)h+=emptyGames();
   else{
@@ -361,7 +557,8 @@ function renderGame(){
   let h=`<div class="bar"><button class="back" data-a="go" data-v="games">‹ Games</button>${g&&S.canWrite?`<button class="btn small" data-a="editGame" data-id="${esc(g.id)}">Edit</button>`:''}</div>`;
   if(!g)return `<div class="view">${h}<p class="muted">${S.gotGames?'This game is no longer here.':'Loading...'}</p></div>`;
   h+=`<section class="board"><div class="board-row"><span class="team">${esc(S.profile.team||'Us')}</span><span class="n">${+g.us||0}</span><span class="n">${+g.them||0}</span><span class="team them">${esc(g.opponent||'Opponent')}</span></div><p class="meta">${esc(fmtDate(g.date,{weekday:'long',month:'long',day:'numeric'}))} · ${g.venue==='away'?'Away':'Home'} · ${esc(g.comp||'')}${g.example?' · Example':''}</p></section>`;
-  h+=`<p class="posline">${played(g).map(p=>{const m=p==='gk'?g.gkMins:g.stMins;return `<span><span class="tag ${p}">${POS_NAME[p]}</span>${m?' '+esc(m)+' min':''}</span>`;}).join('')}</p>`;
+  if(played(g).length)h+=`<p class="posline">${played(g).map(p=>{const m=p==='gk'?g.gkMins:g.stMins;return `<span><span class="tag ${p}">${POS_NAME[p]}</span>${m?' '+esc(m)+' min':''}</span>`;}).join('')}</p>`;
+  if(g.played&&g.played.young){const y=g.young||{};h+=`<section class="block"><h2>How he played</h2><div class="tiles">${tile('Goals',+y.goals||0,'st')}${tile('Dribbled past someone',+y.beat||0,'st')}${tile('Won the ball back',+y.won||0,'st')}</div></section>`;}
   if(g.played&&g.played.gk){
     const gk=g.gk||{},sp=savePct(g),zs=g.zones||[],sv=zs.filter(z=>z.saveable).length,dist=(+gk.distGood||0)+(+gk.distBad||0);
     h+=`<section class="block"><h2>In goal</h2><div class="tiles">${tile('Saves',saves(g),'gk')}${tile('Goals against',zs.length,'gk')}${tile('Save rate',sp==null?'-':sp+'%','gk')}${tile('Clean catches',+gk.catches||0,'gk')}${tile('Drops',+gk.drops||0,'gk')}${tile('High balls won',+gk.high||0,'gk')}${tile('Good throws and kicks',dist?(+gk.distGood||0)+' of '+dist:'-','gk')}</div>`;
@@ -375,11 +572,11 @@ function renderGame(){
   const errs=Object.entries(g.errors||{}).filter(([k,v])=>ERR[k]&&+v>0).sort((a,b)=>b[1]-a[1]);
   if(errs.length){
     const ds=[...new Set(errs.flatMap(([k])=>pickDrills(k,1).map(d=>d.id)))].slice(0,3).map(id=>DRILL[id]);
-    h+=`<section class="block"><h2>Mistakes to learn from</h2><div class="list">${errs.map(([k,v])=>`<div class="row"><span class="tag ${ERR[k].pos}">${POS_SHORT[ERR[k].pos]}</span><span class="row-main"><span class="row-title wrap">${esc(ERR[k].label)}</span><span class="row-sub">${esc(ERR[k].area)}</span></span><span class="row-score sm">×${+v}</span></div>`).join('')}</div><p class="lbl2">Drills that help</p><div class="list pad">${ds.map(dlink).join('')}</div></section>`;
+    h+=`<section class="block"><h2>${g.played&&g.played.young?'Things to practice':'Mistakes to learn from'}</h2><div class="list">${errs.map(([k,v])=>`<div class="row">${errTag(k)}<span class="row-main"><span class="row-title wrap">${esc(ERR[k].label)}</span><span class="row-sub">${esc(ERR[k].area)}</span></span><span class="row-score sm">×${+v}</span></div>`).join('')}</div><p class="lbl2">Drills that help</p><div class="list pad">${ds.map(dlink).join('')}</div></section>`;
   }
   const wl=(g.wells||[]).filter(k=>WELL[k]);
   if(wl.length)h+=`<section class="block"><h2>Went well</h2><div class="chips">${wl.map(k=>`<span class="chip on static">${esc(WELL[k].label)}</span>`).join('')}</div></section>`;
-  const rt=g.ratings||{},rk=['effort','confidence','overall'].filter(k=>rt[k]);
+  const rt=g.ratings||{},rk=['fun','effort','confidence','overall'].filter(k=>rt[k]);
   if(rk.length)h+=`<section class="block"><h2>Ratings</h2><div class="tiles">${rk.map(k=>tile(RATE_NAME[k],rt[k]+'/5','')).join('')}</div></section>`;
   const notes=[['Best moment',g.great],['One thing to work on',g.work],['Other notes',g.notes]].filter(x=>x[1]);
   if(notes.length)h+=`<section class="block"><h2>Feedback</h2>${notes.map(([l,v])=>`<div class="notecard"><p class="lbl2">${l}</p><p class="prose">${esc(v)}</p></div>`).join('')}</section>`;
@@ -396,7 +593,11 @@ function renderGameForm(){
     <div class="field"><label for="g-comp">Type</label><select id="g-comp" data-f="comp">${COMPS.map(c=>`<option ${d.comp===c?'selected':''}>${c}</option>`).join('')}</select></div></div>
     <div class="field"><label for="g-opp">Opponent</label><input id="g-opp" type="text" data-f="opponent" value="${esc(d.opponent)}" placeholder="Team name" autocomplete="off"></div>
     <div class="seg" role="group" aria-label="Home or away">${['home','away'].map(v=>`<button type="button" data-a="set" data-p="venue" data-v="${v}" class="${d.venue===v?'on':''}" aria-pressed="${d.venue===v}">${v==='home'?'Home':'Away'}</button>`).join('')}</div>
-    <div class="steppers">${stepper((S.profile.team||'Our team')+' goals','us',d.us,'',0,40)}${stepper('Their goals','them',d.them,'',0,40)}</div></section>`;
+    <div class="steppers">${stepper((S.profile.team||'Our team')+' goals','us',d.us,'',0,40)}${stepper('Their goals','them',d.them,'',0,40)}</div>${d.played.young?'<p class="sub">Many leagues at this age do not keep score. Leave it at 0-0 if yours does not.</p>':''}</section>`;
+  if(d.played.young){
+    h+=`<section class="group"><h2>How he played</h2><div class="steppers">${stepper('Goals he scored','young.goals',d.young.goals)}${stepper('Dribbled past someone','young.beat',d.young.beat)}${stepper('Won the ball back','young.won',d.young.won)}</div></section>`;
+    h+=`<section class="group"><h2>Things to practice</h2><p class="sub">Tap any you noticed. They pick his practice games. At this age, mistakes just mean he is trying.</p><div class="chips">${ERRORS.filter(e=>e.pos==='young').map(e=>tallyChip(e,d.errors[e.id]||0)).join('')}</div></section>`;
+  }else{
   h+=`<section class="group"><h2>Positions he played</h2><div class="posbtns">${['gk','st'].map(p=>`<button type="button" class="posbtn ${p} ${d.played[p]?'on':''}" data-a="played" data-v="${p}" aria-pressed="${!!d.played[p]}"><strong>${POS_NAME[p]}</strong><span class="sub">${d.played[p]?'Played':'Tap if he played here'}</span></button>`).join('')}</div>
     ${(d.played.gk||d.played.st)?`<div class="two">${d.played.gk?`<div class="field"><label for="g-gkm">Minutes in goal</label><input id="g-gkm" type="number" inputmode="numeric" min="0" max="120" data-f="gkMins" value="${esc(d.gkMins)}"></div>`:''}${d.played.st?`<div class="field"><label for="g-stm">Minutes at striker</label><input id="g-stm" type="number" inputmode="numeric" min="0" max="120" data-f="stMins" value="${esc(d.stMins)}"></div>`:''}</div>`:''}</section>`;
   if(d.played.gk){
@@ -420,37 +621,42 @@ function renderGameForm(){
   const groups=['gk','st'].filter(p=>d.played[p]);
   h+=`<section class="group"><h2>Mistakes</h2><p class="sub">Tap once for each time it happened. These decide what he practices next.</p>`;
   if(!groups.length)h+=`<p class="muted">Pick the positions he played first.</p>`;
-  groups.forEach(p=>{h+=`<p class="lbl2"><span class="tag ${p}">${POS_SHORT[p]}</span>${p==='gk'?'In goal':'Up front'}</p><div class="chips">${ERRORS.filter(e=>e.pos===p).map(e=>{const n=d.errors[e.id]||0;
-    return `<span class="tally ${n?'on':''}"><button type="button" data-a="errAdd" data-id="${e.id}" aria-label="${esc(e.label)}${n?', '+n+' so far':''}">${esc(e.label)}${n?`<b>×${n}</b>`:''}</button>${n?`<button type="button" class="minus" data-a="errSub" data-id="${e.id}" aria-label="Remove one: ${esc(e.label)}">−</button>`:''}</span>`;}).join('')}</div>`;});
+  groups.forEach(p=>{h+=`<p class="lbl2"><span class="tag ${p}">${POS_SHORT[p]}</span>${p==='gk'?'In goal':'Up front'}</p><div class="chips">${ERRORS.filter(e=>e.pos===p).map(e=>tallyChip(e,d.errors[e.id]||0)).join('')}</div>`;});
   h+='</section>';
+  }
   h+=`<section class="group"><h2>Went well</h2><div class="chips">${WELLS.filter(w=>w.pos==='both'||d.played[w.pos]).map(w=>{const on=d.wells.includes(w.id);return `<button type="button" class="chip ${on?'on':''}" data-a="well" data-id="${w.id}" aria-pressed="${on}">${esc(w.label)}</button>`;}).join('')}</div></section>`;
-  h+=`<section class="group"><h2>Ratings</h2>${rating('Effort','ratings.effort',d.ratings.effort,['Low','Huge'])}${rating('Confidence','ratings.confidence',d.ratings.confidence,['Nervous','Fearless'])}${rating('Overall game','ratings.overall',d.ratings.overall,['Tough day','Best yet'])}</section>`;
+  h+=d.played.young?`<section class="group"><h2>Ratings</h2>${rating('Fun','ratings.fun',d.ratings.fun,['Not much','Loved it'])}${rating('Effort','ratings.effort',d.ratings.effort,['Low','Huge'])}</section>`
+    :`<section class="group"><h2>Ratings</h2>${rating('Effort','ratings.effort',d.ratings.effort,['Low','Huge'])}${rating('Confidence','ratings.confidence',d.ratings.confidence,['Nervous','Fearless'])}${rating('Overall game','ratings.overall',d.ratings.overall,['Tough day','Best yet'])}</section>`;
   h+=`<section class="group"><h2>Feedback</h2>
-    <div class="field"><label for="g-great">Best moment</label><textarea id="g-great" data-f="great" placeholder="Example: the diving save at the near post">${esc(d.great)}</textarea></div>
-    <div class="field"><label for="g-work">One thing to work on</label><textarea id="g-work" data-f="work" placeholder="Example: get set before the shooter strikes">${esc(d.work)}</textarea></div>
+    <div class="field"><label for="g-great">Best moment</label><textarea id="g-great" data-f="great" placeholder="${d.played.young?'Example: he scored his first goal':'Example: the diving save at the near post'}">${esc(d.great)}</textarea></div>
+    <div class="field"><label for="g-work">One thing to work on</label><textarea id="g-work" data-f="work" placeholder="${d.played.young?'Example: keep the ball close when dribbling':'Example: get set before the shooter strikes'}">${esc(d.work)}</textarea></div>
     <div class="field"><label for="g-notes">Other notes</label><textarea id="g-notes" data-f="notes">${esc(d.notes)}</textarea></div></section>`;
   h+=`<div class="savebar"><button class="btn primary wide" data-a="saveGame">${edit?'Save changes':'Save game'}</button></div>`;
   return `<div class="view">${h}</div>`;
 }
 function drillOptions(sel){
-  return [['gk','Keeper drills'],['st','Striker drills'],['both','For both']].map(([p,l])=>`<optgroup label="${l}">${DRILLS.filter(d=>d.pos===p).map(d=>`<option value="${d.id}" ${d.id===sel?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>`).join('');
+  const groups=[['speed','Speed and agility'],['gk','Keeper drills'],['st','Striker drills'],['both','For keeper and striker'],['young','Games for ages 5 to 8']];
+  return groups.map(([p,l])=>{const ds=DRILLS.filter(d=>d.pos===p&&(fitsAge(d)||d.id===sel));return ds.length?`<optgroup label="${l}">${ds.map(d=>`<option value="${d.id}" ${d.id===sel?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>`:'';}).join('');
 }
 function scoreInputs(dr,it,i){
   if(dr.score.type==='of')return `<div class="field sm"><label for="s-s${i}">Score</label><input id="s-s${i}" type="number" inputmode="numeric" min="0" data-f="items.${i}.score" value="${esc(it.score)}"></div><span class="of">of</span><div class="field sm"><label for="s-o${i}">Out of</label><input id="s-o${i}" type="number" inputmode="numeric" min="1" data-f="items.${i}.outOf" value="${esc(it.outOf)}"></div>`;
   if(dr.score.type==='count')return `<div class="field sm"><label for="s-s${i}">Score</label><input id="s-s${i}" type="number" inputmode="numeric" min="0" data-f="items.${i}.score" value="${esc(it.score)}"></div>`;
-  return `<p class="sub">No score for this one.</p>`;
+  if(dr.score.type==='time')return `<div class="field sm"><label for="s-s${i}">Seconds</label><input id="s-s${i}" type="number" inputmode="decimal" step="0.01" min="0" data-f="items.${i}.score" value="${esc(it.score)}"></div>`;
+  return '';
 }
+function scoreHint(dr){return dr.score.type==='done'?'Just log the minutes for this one.':dr.score.type==='time'?'Log the fastest time in seconds. Lower is better.':'Count: '+dr.score.unit;}
 function renderSessionForm(){
   const d=S.sd;if(!d){S.view='train';return renderTrain();}
   const edit=!!S.sEdit;
   let h=`<div class="bar"><button class="back" data-a="go" data-v="train">‹ Train</button><span class="sub">${edit?'Editing a saved session':'Your draft is kept as you go'}</span></div><h1>${edit?'Edit training':'Log training'}</h1>`;
   if(S.sResumed&&!edit)h+=`<div class="note"><span>Picked up your unsaved training log.</span><button class="btn small" data-a="freshSession">Start over</button></div>`;
+  if(d.programKey)h+=`<div class="note"><span><b>Speed program:</b> ${esc(d.programLabel||'')}. Do the drills in order and rest fully between sprints.</span></div>`;
   h+=`<section class="group"><div class="two"><div class="field"><label for="s-date">Date</label><input id="s-date" type="date" data-f="date" value="${esc(d.date)}"></div><div class="field"><label for="s-min">Total minutes</label><input id="s-min" type="number" inputmode="numeric" min="0" max="300" data-f="minutes" value="${esc(d.minutes)}"></div></div></section>`;
   h+=`<section class="group"><h2>Drills</h2>`;
   if(!d.items.length)h+=`<p class="muted">Add each drill he did and how he scored.</p>`;
   d.items.forEach((it,i)=>{const dr=DRILL[it.drillId];if(!dr)return;
     h+=`<div class="item"><div class="field"><label for="s-d${i}">Drill ${i+1}</label><select id="s-d${i}" data-f="items.${i}.drillId">${drillOptions(it.drillId)}</select></div>
-    <p class="sub">${dr.score.type==='done'?'Just log the minutes for this one.':'Count: '+esc(dr.score.unit)}</p>
+    <p class="sub">${it.dose?'<b>'+esc(it.dose)+'</b> \u00b7 ':''}${esc(scoreHint(dr))}</p>
     <div class="item-score">${scoreInputs(dr,it,i)}<button type="button" class="mini" data-a="delItem" data-i="${i}">Remove</button></div></div>`;});
   h+=`<button type="button" class="btn wide" data-a="addItem">+ Add a drill</button></section>`;
   h+=`<section class="group"><h2>How did it feel?</h2>${rating('Feel','feel',d.feel,['Tough','Great'])}<div class="field"><label for="s-notes">Notes</label><textarea id="s-notes" data-f="notes" placeholder="What clicked, what was hard">${esc(d.notes)}</textarea></div></section>`;
@@ -458,29 +664,46 @@ function renderSessionForm(){
   if(edit&&S.canWrite)h+=`<button class="btn danger wide" data-a="delSession" data-id="${esc(S.sEdit)}" data-confirm="Tap again to delete">Delete this session</button>`;
   return `<div class="view">${h}</div>`;
 }
+function helpsWith(d){
+  const out=[...new Set(d.fixes.map(x=>ERR[x].area.toLowerCase()))];
+  GOALS.forEach(G=>{const l=G.label.toLowerCase();if(G.drills.indexOf(d.id)>=0&&out.indexOf(l)<0)out.push(l);});
+  return out.join(', ');
+}
+function drillCard(d,f){
+  const hw=helpsWith(d);
+  return `<button class="dcard" data-a="drill" data-id="${d.id}"><span class="dc-top"><span class="tag ${d.pos}">${POS_SHORT[d.pos]}</span>${f?'<span class="tag focus">Focus</span>':''}<span class="sub">${d.mins} min</span></span><span class="dc-name">${esc(d.name)}</span>${hw?`<span class="sub">Helps with ${esc(hw)}</span>`:''}<span class="dc-last">${esc(lastLabel(d))}</span></button>`;
+}
 function renderTrain(){
-  const goal=+S.profile.weeklyGoal||3,wc=weekCount(0),fids=new Set(focusDrillIds()),ss=sessions();
-  let h=`<div class="bar"><h1>Train</h1>${S.canWrite?`<button class="btn primary small" data-a="newSession">Log training</button>`:''}</div>`+dbNotice();
+  const goal=+S.profile.weeklyGoal||3,wc=weekCount(0),fids=new Set(focusDrillIds()),ss=sessions(),young=isYoung(),a=ageOf();
+  let h=whoBar(false)+`<div class="bar"><h1>Train</h1>${S.canWrite?`<button class="btn primary small" data-a="newSession">Log training</button>`:''}</div>`+dbNotice();
   h+=`<p class="muted">${wc} of ${goal} sessions this week. ${wc>=goal?'Goal reached, nice work.':(goal-wc)+' to go.'}</p>`;
-  h+=`<section class="block"><div class="block-head"><h2>Training log</h2>${ss.length>3?`<button class="link" data-a="toggleSess">${S.allSess?'Show fewer':'Show all '+ss.length}</button>`:''}</div>${S.db&&!S.gotSessions?'<p class="muted">Loading...</p>':ss.length?`<div class="list">${(S.allSess?ss:ss.slice(0,3)).map(sessRow).join('')}</div>`:`<div class="empty"><p><b>No training logged yet.</b></p><p>Pick a drill below, try it together, and tap Log this drill to record his score.</p></div>`}</section>`;
-  const list=DRILLS.filter(d=>S.drillPos==='all'||d.pos===S.drillPos||d.pos==='both').map((d,i)=>({d,i,f:fids.has(d.id)})).sort((a,b)=>(b.f-a.f)||(a.i-b.i));
-  h+=`<section class="block"><div class="block-head"><h2>Drill library</h2><span class="sub">${DRILLS.length} drills you can do with a parent</span></div>
-  <div class="seg" role="group" aria-label="Filter drills">${[['all','All'],['gk','Keeper'],['st','Striker']].map(([v,l])=>`<button type="button" data-a="drillPos" data-v="${v}" class="${S.drillPos===v?'on':''}" aria-pressed="${S.drillPos===v}">${l}</button>`).join('')}</div>
-  <div class="drills">${list.map(({d,f})=>`<button class="dcard" data-a="drill" data-id="${d.id}"><span class="dc-top"><span class="tag ${d.pos}">${POS_SHORT[d.pos]}</span>${f?'<span class="tag focus">Focus</span>':''}<span class="sub">${d.mins} min</span></span><span class="dc-name">${esc(d.name)}</span><span class="sub">Helps with ${esc([...new Set(d.fixes.map(x=>ERR[x].area.toLowerCase()))].join(', '))}</span><span class="dc-last">${esc(lastLabel(d))}</span></button>`).join('')}</div></section>`;
+  const progs=young?[]:PROGRAMS.filter(P=>fitsAge(P));
+  if(progs.length)h+=`<section class="block"><h2>Programs</h2>${progs.map(P=>{const pr=progOf(),act=pr&&pr.id===P.id,all=progSessions(P),dn=act?all.filter(x=>(pr.done||{})[x.key]).length:0;
+    return `<button class="dcard" data-a="openProgram" data-id="${P.id}"><span class="dc-top"><span class="tag speed">Speed</span>${act?'<span class="tag focus">In progress</span>':''}<span class="sub">${P.weeks.length} weeks</span></span><span class="dc-name">${esc(P.title)}</span><span class="sub">${esc(P.summary)}</span>${act?`<span class="dc-last">${dn} of ${all.length} sessions done</span>`:''}</button>`;}).join('')}</section>`;
+  h+=`<section class="block"><div class="block-head"><h2>Training log</h2>${ss.length>3?`<button class="link" data-a="toggleSess">${S.allSess?'Show fewer':'Show all '+ss.length}</button>`:''}</div>${S.db&&!S.gotSessions?'<p class="muted">Loading...</p>':ss.length?`<div class="list">${(S.allSess?ss:ss.slice(0,3)).map(sessRow).join('')}</div>`:`<div class="empty"><p><b>No training logged yet.</b></p><p>Pick a ${young?'game':'drill'} below, try it together, and tap Log this drill to record how it went.</p></div>`}</section>`;
+  const pos=young?'all':S.drillPos;
+  const inCat=d=>pos==='all'||(pos==='speed'?(d.pos==='speed'||GOAL.speed.drills.indexOf(d.id)>=0):(d.pos===pos||d.pos==='both'));
+  const list=DRILLS.filter(d=>fitsAge(d)&&inCat(d)).map((d,i)=>({d,i,f:fids.has(d.id)})).sort((x,y)=>(y.f-x.f)||(x.i-y.i));
+  h+=`<section class="block"><div class="block-head"><h2>${young?'Practice games':'Drill library'}</h2><span class="sub">${a!=null?'Picked for age '+a:'Add his birth year to match drills to his age'}</span></div>
+  ${young?'':`<div class="seg" role="group" aria-label="Filter drills">${[['all','All'],['gk','Keeper'],['st','Striker'],['speed','Speed']].map(([v,l])=>`<button type="button" data-a="drillPos" data-v="${v}" class="${S.drillPos===v?'on':''}" aria-pressed="${S.drillPos===v}">${l}</button>`).join('')}</div>`}
+  <div class="drills">${list.map(({d,f})=>drillCard(d,f)).join('')}</div></section>`;
   return `<div class="view">${h}</div>`;
 }
 function renderDrill(){
   const d=DRILL[S.arg];if(!d){S.view='train';return renderTrain();}
-  const log=drillLog(d.id);
+  const log=drillLog(d.id),lb=d.score.type==='time';
   let h=`<div class="bar"><button class="back" data-a="go" data-v="train">‹ Train</button></div>`;
-  h+=`<header class="dhead"><p class="eyebrow"><span class="tag ${d.pos}">${POS_NAME[d.pos]}</span>${d.mins} minutes</p><h1>${esc(d.name)}</h1><p><b>You need:</b> ${esc(d.need)}</p></header>`;
-  h+=`<section class="block"><h2>How to do it</h2><ol class="steps prose">${d.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></section>`;
-  h+=`<section class="block"><h2>Coaching cues</h2><ul class="cues prose">${d.cues.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></section>`;
-  h+=`<section class="block"><h2>Fixes these mistakes</h2><div class="chips">${d.fixes.map(f=>`<span class="chip static">${esc(ERR[f].label)}</span>`).join('')}</div></section>`;
-  let sc=`<p class="prose">${d.score.type==='of'?'Count '+esc(d.score.unit)+' out of '+d.score.n+'.':d.score.type==='count'?'Record his '+esc(d.score.unit)+'.':'No score needed. Log the minutes.'}</p>`;
+  h+=`<header class="dhead"><p class="eyebrow"><span class="tag ${d.pos}">${POS_NAME[d.pos]}</span>${d.mins} minutes · ages ${d.ages[0]} to ${d.ages[1]}</p><h1>${esc(d.name)}</h1><p><b>You need:</b> ${esc(d.need)}</p></header>`;
+  if(d.note)h+=`<p class="drill-note">${esc(d.note)}</p>`;
+  h+=`<section class="block"><h2>How to do it</h2><ol class="steps prose">${d.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></section>`;
+  h+=`<section class="block"><h2>Coaching cues</h2><ul class="cues prose">${d.cues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
+  if(d.fixes.length)h+=`<section class="block"><h2>Fixes these mistakes</h2><div class="chips">${d.fixes.map(f=>`<span class="chip static">${esc(ERR[f].label)}</span>`).join('')}</div></section>`;
+  let sc=`<p class="prose">${d.score.type==='of'?'Count '+esc(d.score.unit)+' out of '+d.score.n+'.':d.score.type==='count'?'Record his '+esc(d.score.unit)+'.':lb?'Time it with a phone stopwatch and log the time in seconds. Lower is better.':'No score needed. Log the minutes.'}</p>`;
   if(log.length){
     const vals=log.map(it=>scoreVal(d,it)).filter(v=>v!=null&&!isNaN(v));
-    sc+=`<div class="hist">${vals.length>=2?spark(vals,d.score.type==='of'?100:null):''}<div class="hist-stats"><span><b>${log.length}</b> ${plural(log.length,'time','times')}</span>${vals.length?`<span>Best <b>${Math.max(...vals)}${d.score.type==='of'?'%':''}</b></span>`:''}</div></div>`;
+    const best=!vals.length?'':lb?Math.min(...vals).toFixed(2)+' s':Math.max(...vals)+(d.score.type==='of'?'%':'');
+    const sp=vals.length<2?'':lb?spark(vals.map(v=>-v),null,vals[vals.length-1].toFixed(2)+' seconds',true):spark(vals,d.score.type==='of'?100:null);
+    sc+=`<div class="hist">${sp}<div class="hist-stats"><span><b>${log.length}</b> ${plural(log.length,'time','times')}</span>${best?`<span>Best <b>${best}</b></span>`:''}</div></div>`;
     sc+=`<div class="list">${log.slice(-6).reverse().map(it=>`<div class="row"><span class="row-main"><span class="row-title">${esc(fmtDate(it.date))}</span></span><span class="row-score sm">${esc(scoreText(d,it))}</span></div>`).join('')}</div>`;
   }else sc+=`<p class="muted">No scores yet. His first try sets the bar to beat.</p>`;
   h+=`<section class="block"><h2>Score it</h2>${sc}</section>`;
@@ -489,10 +712,24 @@ function renderDrill(){
 }
 function renderProgress(){
   const gs=games(),ss=sessions();
-  let h='<h1>Progress</h1>'+dbNotice();
-  if(!gs.length&&!ss.length)return `<div class="view">${h}<div class="empty"><p><b>Nothing to chart yet.</b></p><p>Save rate, shots on target, where goals go in, and drill scores show up here after the first game or training log.</p></div></div>`;
-  const w=gs.filter(g=>result(g)==='W').length,dr=gs.filter(g=>result(g)==='D').length,mins=ss.reduce((a,s)=>a+(+s.minutes||0),0);
+  let h=whoBar(false)+'<h1>Progress</h1>'+dbNotice();
+  if(!gs.length&&!ss.length)return `<div class="view">${h}<div class="empty"><p><b>Nothing to chart yet.</b></p><p>Game stats, mistakes trending up or down, and drill scores show up here after the first game or training log.</p></div></div>`;
+  const w=gs.filter(g=>result(g)==='W').length,dr=gs.filter(g=>result(g)==='D').length,mins=ss.reduce((a,x)=>a+(+x.minutes||0),0);
   h+=`<div class="tiles">${tile('Games logged',gs.length)}${tile('Won, drawn, lost',w+'-'+dr+'-'+(gs.length-w-dr))}${tile('Training sessions',ss.length)}${tile('Minutes trained',mins)}</div>`;
+  const yg=gs.filter(g=>g.played&&g.played.young);
+  if(yg.length){
+    const t=yg.reduce((a,g)=>{const y=g.young||{},f=+(g.ratings||{}).fun||0;return {g:a.g+(+y.goals||0),b:a.b+(+y.beat||0),w:a.w+(+y.won||0),f:a.f+f,fn:a.fn+(f?1:0)};},{g:0,b:0,w:0,f:0,fn:0});
+    const rec=yg.slice(0,10).reverse(),mx=Math.max(4,...rec.map(g=>+(g.young||{}).goals||0));
+    h+=`<section class="block"><div class="block-head"><h2>His games</h2><span class="sub">${yg.length} ${plural(yg.length,'game','games')}</span></div>
+    <div class="card"><p class="lbl2">Goals by game</p>${bars(rec.map(g=>({label:shortDate(g.date),value:+(g.young||{}).goals||0})),{max:mx%2?mx+1:mx,cls:'b-st',unit:'',label:'Goals by game'})}</div>
+    <div class="tiles">${tile('Goals',t.g,'st')}${tile('Dribbled past someone',t.b,'st')}${tile('Won the ball back',t.w,'st')}${tile('Average fun',t.fn?(t.f/t.fn).toFixed(1)+'/5':'-','st')}</div></section>`;
+  }
+  const tests=drillLog('sp_test').filter(x=>x.score!=null&&x.score!=='');
+  if(tests.length){
+    const first=+tests[0].score,best=Math.min(...tests.map(x=>+x.score));
+    h+=`<section class="block"><div class="block-head"><h2><span class="tag speed">Speed</span>20 m sprint</h2><span class="sub">${tests.length} ${plural(tests.length,'test','tests')}</span></div>
+    <div class="tiles">${tile('First test',first.toFixed(2)+' s','')}${tile('Best',best.toFixed(2)+' s','')}${tile('Faster by',first>best?(first-best).toFixed(2)+' s':'-','')}</div></section>`;
+  }
   const gk=gs.filter(g=>g.played&&g.played.gk);
   if(gk.length){
     const t=gk.reduce((a,g)=>({s:a.s+saves(g),c:a.c+conceded(g),ca:a.ca+(+(g.gk||{}).catches||0),dr:a.dr+(+(g.gk||{}).drops||0)}),{s:0,c:0,ca:0,dr:0});
@@ -505,46 +742,74 @@ function renderProgress(){
   }
   const st=gs.filter(g=>g.played&&g.played.st);
   if(st.length){
-    const all=st.flatMap(g=>g.shots||[]),goals=all.filter(s=>s.r==='goal').length,on=all.filter(s=>s.r==='goal'||s.r==='on').length;
+    const all=st.flatMap(g=>g.shots||[]),goals=all.filter(x=>x.r==='goal').length,on=all.filter(x=>x.r==='goal'||x.r==='on').length;
     h+=`<section class="block"><div class="block-head"><h2><span class="tag st">ST</span>Striker</h2><span class="sub">${st.length} ${plural(st.length,'game','games')} up front</span></div>
     <div class="card"><p class="lbl2">Shots on target by game</p>${bars(st.slice(0,10).reverse().map(g=>({label:shortDate(g.date),value:shotStats(g).pct})),{max:100,cls:'b-st',unit:'%',label:'Shots on target by game'})}</div>
     <div class="tiles">${tile('Goals',goals,'st')}${tile('Shots',all.length,'st')}${tile('On target',all.length?Math.round(on/all.length*100)+'%':'-','st')}${tile('Assists',st.reduce((a,g)=>a+(+(g.st||{}).assists||0),0),'st')}</div>
-    ${all.some(s=>s.x!=null)?`<div class="card"><p class="lbl2">Every shot</p>${pitchSVG(all)}${legend()}</div>`:''}</section>`;
+    ${all.some(x=>x.x!=null)?`<div class="card"><p class="lbl2">Every shot</p>${pitchSVG(all)}${legend()}</div>`:''}</section>`;
   }
   if(gs.length){
     const a=gs.slice(0,3),b=gs.slice(3,6),ta=tallyErr(a),tb=tallyErr(b);
     const keys=[...new Set([...Object.keys(ta),...Object.keys(tb)])].sort((x,y)=>((ta[y]||0)-(ta[x]||0))||((tb[y]||0)-(tb[x]||0))).slice(0,8);
-    h+=`<section class="block"><div class="block-head"><h2>Mistakes</h2><span class="sub">${b.length?'Last 3 games compared with the ones before':'Last '+(a.length===1?'game':a.length+' games')}</span></div>`;
-    if(!keys.length)h+='<p class="muted">No mistakes logged yet.</p>';
+    h+=`<section class="block"><div class="block-head"><h2>${isYoung()?'Things to practice':'Mistakes'}</h2><span class="sub">${b.length?'Last 3 games compared with the ones before':'Last '+(a.length===1?'game':a.length+' games')}</span></div>`;
+    if(!keys.length)h+='<p class="muted">Nothing logged yet.</p>';
     else h+=`<div class="list">${keys.map(k=>{const na=ta[k]||0,nb=tb[k]||0;let tr='';
       if(b.length){const ra=na/a.length,rb=nb/b.length;tr=ra<rb?'<span class="trend down">Fewer</span>':ra>rb?'<span class="trend up">More</span>':'<span class="trend same">Same</span>';}
-      return `<div class="row"><span class="tag ${ERR[k].pos}">${POS_SHORT[ERR[k].pos]}</span><span class="row-main"><span class="row-title wrap">${esc(ERR[k].label)}</span><span class="row-sub">Last ${a.length===1?'game':a.length}: ${na}${b.length?' · before: '+nb:''}</span></span>${tr}</div>`;}).join('')}</div>`;
+      return `<div class="row">${errTag(k)}<span class="row-main"><span class="row-title wrap">${esc(ERR[k].label)}</span><span class="row-sub">Last ${a.length===1?'game':a.length}: ${na}${b.length?' · before: '+nb:''}</span></span>${tr}</div>`;}).join('')}</div>`;
     h+='</section>';
   }
   const rows=DRILLS.map(d=>({d,log:drillLog(d.id)})).filter(x=>x.log.length&&x.d.score.type!=='done');
   if(rows.length){
     h+=`<section class="block"><h2>Drill scores</h2><div class="list">${rows.map(({d,log})=>{
-      const vals=log.map(it=>scoreVal(d,it)).filter(v=>v!=null&&!isNaN(v));let tr='';
-      if(vals.length>1){const diff=vals[vals.length-1]-vals[0],u=d.score.type==='of'?' points':'';tr=diff>0?' · up '+diff+u+' since the first try':diff<0?' · down '+(-diff)+u+' since the first try':' · same as the first try';}
-      return `<button class="row" data-a="drill" data-id="${d.id}"><span class="row-main"><span class="row-title wrap">${esc(d.name)}</span><span class="row-sub">Latest ${esc(scoreText(d,log[log.length-1]))}${tr}</span></span>${vals.length>1?spark(vals,d.score.type==='of'?100:null):''}</button>`;}).join('')}</div></section>`;
+      const vals=log.map(it=>scoreVal(d,it)).filter(v=>v!=null&&!isNaN(v)),lb=d.score.type==='time';let tr='';
+      if(vals.length>1){
+        const diff=vals[vals.length-1]-vals[0];
+        if(lb){const x=Math.abs(diff).toFixed(2);tr=diff<0?' · '+x+' s faster than the first try':diff>0?' · '+x+' s slower than the first try':' · same as the first try';}
+        else{const u=d.score.type==='of'?' points':'';tr=diff>0?' · up '+diff+u+' since the first try':diff<0?' · down '+(-diff)+u+' since the first try':' · same as the first try';}
+      }
+      const sp=vals.length<2?'':lb?spark(vals.map(v=>-v),null,vals[vals.length-1].toFixed(2)+' seconds',true):spark(vals,d.score.type==='of'?100:null);
+      return `<button class="row" data-a="drill" data-id="${d.id}"><span class="row-main"><span class="row-title wrap">${esc(d.name)}</span><span class="row-sub">Latest ${esc(scoreText(d,log[log.length-1]))}${tr}</span></span>${sp}</button>`;}).join('')}</div></section>`;
   }
   return `<div class="view">${h}</div>`;
 }
 function renderPlayer(){
-  const p=S.pf||(S.pf=clone(S.profile));
-  let h=`<div class="bar"><button class="back" data-a="go" data-v="home">‹ Home</button></div><h1>Player</h1>`;
-  h+=`<section class="group"><div class="field"><label for="p-name">His name</label><input id="p-name" type="text" data-f="name" value="${esc(p.name)}" autocomplete="off"></div>
+  const p=S.pf||(S.pf=clone(S.profile)),a=ageOf(p),young=isYoung(p),nm=p.name||'him';
+  let h=`<div class="bar"><button class="back" data-a="go" data-v="home">‹ Home</button></div><h1>${S.pfNew?'New player':'Player'}</h1>`;
+  h+=`<section class="group">
+  <div class="field"><label for="p-name">His name</label><input id="p-name" type="text" data-f="name" value="${esc(p.name)}" autocomplete="off"></div>
+  <div class="two"><div class="field"><label for="p-year">Birth year</label><input id="p-year" type="number" inputmode="numeric" min="${THIS_YEAR-25}" max="${THIS_YEAR-3}" placeholder="${THIS_YEAR-11}" data-f="birthYear" value="${esc(p.birthYear)}"></div>
+  <div class="field"><span class="lbl2">Age this year</span><p class="agechip">${a!=null?a:'-'}</p></div></div>
+  <p class="sub">Used to pick drills and games that fit his age.</p>
   <div class="field"><label for="p-team">Team</label><input id="p-team" type="text" data-f="team" value="${esc(p.team)}" autocomplete="off"></div>
-  <div class="field"><span class="lbl2">Favorite position</span><div class="seg" role="group" aria-label="Favorite position">${['gk','st'].map(v=>`<button type="button" data-a="set" data-p="preferred" data-v="${v}" class="${p.preferred===v?'on':''}" aria-pressed="${p.preferred===v}">${POS_NAME[v]}</button>`).join('')}</div></div>
+  <div class="field"><span class="lbl2">Position</span><div class="seg" role="group" aria-label="Position">${[['gk','Goalkeeper'],['st','Striker'],['all','Everywhere']].map(([v,l])=>`<button type="button" data-a="set" data-p="preferred" data-v="${v}" class="${p.preferred===v?'on':''}" aria-pressed="${p.preferred===v}">${l}</button>`).join('')}</div>${young?'<p class="sub">At his age most teams play small-sided games without fixed positions.</p>':''}</div>
+  <div class="field"><span class="lbl2">What he wants to work on</span><div class="chips">${GOALS.filter(G=>G.drills.some(id=>DRILL[id]&&fitsAge(DRILL[id],p))).map(G=>{const on=(p.goals||[]).indexOf(G.id)>=0;return `<button type="button" class="chip ${on?'on':''}" data-a="pgoal" data-id="${G.id}" aria-pressed="${on}">${esc(G.label)}</button>`;}).join('')}</div></div>
   <div class="steppers">${stepper('Training sessions per week','weeklyGoal',p.weeklyGoal||3,'Weekly goal',1,7)}</div></section>`;
-  h+=`<div class="savebar"><button class="btn primary wide" data-a="saveProfile">Save player</button></div>`;
+  h+=`<div class="savebar"><button class="btn primary wide" data-a="saveProfile">${S.pfNew?'Add player':'Save player'}</button></div>`;
+  if(!S.pfNew&&S.players.length>1)h+=`<button class="btn danger wide" data-a="delPlayer" data-confirm="Tap again to remove ${esc(nm)} and his games and training">Remove ${esc(nm)}</button>`;
+  if(S.pfNew)return `<div class="view">${h}</div>`;
   const lb=lsGet(K_BACKUP);
-  h+=`<section class="group"><h2>Backup</h2><p>Games and training are saved on this phone only, not online. A backup is one small file you can keep in Files, email to yourself, or use to move everything to a new phone.</p>
+  h+=`<section class="group"><h2>Backup</h2><p>Games and training for every player are saved on this phone only, not online. A backup is one small file you can keep in Files, email to yourself, or use to move everything to a new phone.</p>
   <p class="sub">${lb?'Last backup: '+esc(new Date(lb).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})):'No backup yet.'}</p>
   <div class="backup-row"><button class="btn" data-a="exportBackup">Back up now</button><button class="btn" data-a="importPick">Restore a backup</button></div>`;
   if(S.pendingImport){const pi=S.pendingImport,gn=Object.keys(pi.data.games||{}).length,sn=Object.keys(pi.data.sessions||{}).length;
     h+=`<div class="note warn"><span>Replace everything on this phone with the backup from <b>${esc(pi.when)}</b>? It has ${gn} ${plural(gn,'game','games')} and ${sn} training ${plural(sn,'session','sessions')}.</span><div class="note-btns"><button class="btn small" data-a="importConfirm" data-confirm="Tap again to replace">Replace</button><button class="btn small" data-a="importCancel">Cancel</button></div></div>`;}
   h+=`</section>`;
+  return `<div class="view">${h}</div>`;
+}
+function renderProgram(){
+  const P=PROGRAM[S.arg]||PROGRAMS[0],pr=progOf(),active=!!(pr&&pr.id===P.id),done=(active&&pr.done)||{},fits=fitsAge(P);
+  let h=`<div class="bar"><button class="back" data-a="go" data-v="train">‹ Train</button></div>`;
+  h+=`<header class="dhead"><p class="eyebrow"><span class="tag speed">Speed</span>For ages ${P.ages[0]} to ${P.ages[1]}</p><h1>${esc(P.title)}</h1><p class="muted prose">${esc(P.summary)}</p></header>`;
+  if(!fits)h+=`<div class="note"><span>This program is for ages ${P.ages[0]} to ${P.ages[1]}.${isYoung()?' For younger kids, chase games like Tail Tag build speed the right way.':''}</span></div>`;
+  h+=`<section class="block"><h2>How it works</h2><ul class="cues prose">${SPEED_RULES.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></section>`;
+  P.weeks.forEach((w,wi)=>{
+    h+=`<section class="block"><h2>Week ${wi+1}</h2>${w.map((x,si)=>{const key='w'+(wi+1)+'s'+(si+1),d=done[key];
+      return `<div class="card prog-sess${d?' done':''}"><p class="eyebrow">${esc(x.name)}${d?`<span class="tag focus">Done ${esc(fmtDate(d,{month:'short',day:'numeric'}))}</span>`:''}</p><h3>${esc(x.focus)}</h3><ul class="prog-list">${x.items.map(([id,dose])=>`<li><button class="link" data-a="drill" data-id="${id}">${esc(DRILL[id].name)}</button> <span class="sub">${esc(dose)}</span></li>`).join('')}</ul></div>`;}).join('')}</section>`;
+  });
+  if(S.canWrite&&fits){
+    if(!active)h+=`<div class="savebar"><button class="btn primary wide" data-a="progBegin" data-id="${P.id}">Start the program for ${esc(S.profile.name||'him')}</button></div>`;
+    else{const nx=progNext();h+=`<div class="savebar"><button class="btn primary wide" data-a="progStart" ${nx?'':'disabled'}>${nx?'Start the next session':'Program complete'}</button></div><button class="btn danger wide" data-a="progStop" data-confirm="Tap again to stop the program">Stop the program</button>`;}
+  }
   return `<div class="view">${h}</div>`;
 }
 function installNote(){
@@ -649,9 +914,11 @@ function arrowLegend(){
 }
 function boardTemplate(kind){
   if(kind==='lineup'){
-    const L=[['gk','GK',34,100.5],['us','2',54,87],['us','4',34,89],['us','3',14,87],['us','6',24,73],['us','8',44,73],['us','7',56,60],['us','9',34,58],['us','11',12,60],['ball','',34,52.5]];
-    const hiLabel=S.profile.preferred==='st'?'9':'GK';
-    return {title:'Our 9v9 lineup',view:'full',tokens:L.map((x,i)=>({id:'t'+(i+1),type:x[0],label:x[1],hi:x[1]===hiLabel})),steps:[{caption:'',pos:Object.fromEntries(L.map((x,i)=>['t'+(i+1),[x[2],x[3]]])),arrows:[]}]};
+    let L,title;
+    if(isYoung()){const me=(S.profile.name||'Me').charAt(0).toUpperCase();L=[['us',me,34,64],['us','2',18,57],['us','3',50,57],['us','4',34,47],['ball','',34,52.5]];title='Our 4v4 team';}
+    else{L=[['gk','GK',34,100.5],['us','2',54,87],['us','4',34,89],['us','3',14,87],['us','6',24,73],['us','8',44,73],['us','7',56,60],['us','9',34,58],['us','11',12,60],['ball','',34,52.5]];title='Our 9v9 lineup';}
+    const hiLabel=isYoung()?L[0][1]:S.profile.preferred==='st'?'9':'GK';
+    return {title,view:'full',tokens:L.map((x,i)=>({id:'t'+(i+1),type:x[0],label:x[1],hi:x[1]===hiLabel&&x[0]!=='ball'})),steps:[{caption:'',pos:Object.fromEntries(L.map((x,i)=>['t'+(i+1),[x[2],x[3]]])),arrows:[]}]};
   }
   return {title:'',view:'full',tokens:[{id:'t1',type:'ball',label:''}],steps:[{caption:'',pos:{t1:[34,52.5]},arrows:[]}]};
 }
@@ -678,13 +945,14 @@ function advancePositions(st){
 }
 
 function renderBoardList(){
-  let h='<div class="bar"><h1>Board</h1></div><p class="muted">Put players on the field, draw runs and passes, and step through a move together.</p>';
+  let h=whoBar(false)+'<div class="bar"><h1>Board</h1></div><p class="muted">Put players on the field, draw runs and passes, and step through a move together.</p>';
   const dr=lsGet(K_BOARD);
   if(dr&&dr.d&&!dr.edit)h+=`<div class="note"><span>You have an unsaved board${dr.d.title?': <b>'+esc(dr.d.title)+'</b>':''}.</span><button class="btn small" data-a="bResume">Keep editing</button></div>`;
-  if(S.canWrite)h+='<div class="actions"><button class="btn primary big" data-a="bNew" data-v="blank">New board<small>Empty field</small></button><button class="btn big" data-a="bNew" data-v="lineup">Team lineup<small>9v9 in a 3-2-3</small></button></div>';
-  const list=PLAYS.filter(p=>S.playPos==='all'||p.pos===S.playPos);
+  const young=isYoung();
+  if(S.canWrite)h+=`<div class="actions"><button class="btn primary big" data-a="bNew" data-v="blank">New board<small>Empty field</small></button><button class="btn big" data-a="bNew" data-v="lineup">Team lineup<small>${young?'4v4, no keeper':'9v9 in a 3-2-3'}</small></button></div>`;
+  const list=PLAYS.filter(p=>fitsAge({ages:p.ages||[9,18]})&&(young||S.playPos==='all'||p.pos===S.playPos));
   h+=`<section class="block"><div class="block-head"><h2>Moves to learn</h2><span class="sub">Tap one, then press Play</span></div>
-  <div class="seg" role="group" aria-label="Filter moves">${[['all','All'],['gk','Keeper'],['st','Striker']].map(([v,l])=>`<button type="button" data-a="playPos" data-v="${v}" class="${S.playPos===v?'on':''}" aria-pressed="${S.playPos===v}">${l}</button>`).join('')}</div>
+  ${young?'':`<div class="seg" role="group" aria-label="Filter moves">${[['all','All'],['gk','Keeper'],['st','Striker']].map(([v,l])=>`<button type="button" data-a="playPos" data-v="${v}" class="${S.playPos===v?'on':''}" aria-pressed="${S.playPos===v}">${l}</button>`).join('')}</div>`}
   <div class="drills">${list.map(p=>`<button class="dcard playcard" data-a="bOpen" data-id="lib:${p.id}">${fieldSVG(p,0,{thumb:true})}<span class="pc-text"><span class="dc-top"><span class="tag ${p.pos}">${POS_SHORT[p.pos]}</span><span class="sub">${p.steps.length} steps</span></span><span class="dc-name">${esc(p.title)}</span><span class="sub">${esc(p.summary)}</span></span></button>`).join('')}</div></section>`;
   const mine=S.boards.slice().sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
   h+=`<section class="block"><h2>My boards</h2>${mine.length?`<div class="list">${mine.map(b=>`<button class="row" data-a="bOpen" data-id="${esc(b.id)}"><span class="row-main"><span class="row-title">${esc(b.title||'Untitled board')}</span><span class="row-sub">${b.steps.length} ${plural(b.steps.length,'step','steps')} · ${esc(VIEW_NAME[b.view]||'')}</span></span><span class="go" aria-hidden="true">›</span></button>`).join('')}</div>`:'<div class="empty"><p><b>No boards yet.</b></p><p>Start a new board to show him a move, or open a ready-made one and tap Copy to edit to change it.</p></div>'}</section>`;
@@ -854,8 +1122,8 @@ function svgPoint(svg,e){
 }
 
 /* ---------- Render loop ---------- */
-const VIEWS={home:renderHome,games:renderGames,game:renderGame,gameform:renderGameForm,train:renderTrain,drill:renderDrill,sessionform:renderSessionForm,progress:renderProgress,player:renderPlayer,board:renderBoardList,boardview:renderBoardView,boardedit:renderBoardEdit};
-const TAB_OF={home:'home',player:'home',games:'games',game:'games',gameform:'games',train:'train',drill:'train',sessionform:'train',progress:'progress',board:'board',boardview:'board',boardedit:'board'};
+const VIEWS={home:renderHome,games:renderGames,game:renderGame,gameform:renderGameForm,train:renderTrain,drill:renderDrill,sessionform:renderSessionForm,progress:renderProgress,player:renderPlayer,program:renderProgram,board:renderBoardList,boardview:renderBoardView,boardedit:renderBoardEdit};
+const TAB_OF={home:'home',player:'home',games:'games',game:'games',gameform:'games',train:'train',drill:'train',sessionform:'train',progress:'progress',program:'train',board:'board',boardview:'board',boardedit:'board'};
 function keyOf(el){if(!el||!el.dataset||!el.dataset.a)return null;const d=el.dataset;return [d.a,d.p,d.d,d.id,d.z,d.i,d.v].join('|');}
 function render(){
   const k=view.contains(document.activeElement)?keyOf(document.activeElement):null;
@@ -866,7 +1134,7 @@ function render(){
 function go(v,arg){if(S.playing||animTok)stopPlay();S.view=v;S.arg=arg==null?null:arg;render();window.scrollTo(0,0);}
 function refresh(){if(!FORM_VIEWS.has(S.view))render();}
 function draft(){return S.view==='gameform'?S.gd:S.view==='sessionform'?S.sd:S.view==='player'?S.pf:S.view==='boardedit'?S.bd:null;}
-function persist(){if(S.view==='gameform'&&S.gd)lsSet(K_GAME,{edit:S.gEdit,d:S.gd});else if(S.view==='sessionform'&&S.sd)lsSet(K_SESS,{edit:S.sEdit,d:S.sd});else if(S.view==='boardedit'&&S.bd)lsSet(K_BOARD,{edit:S.bEdit,d:S.bd});}
+function persist(){if(S.view==='gameform'&&S.gd)lsSet(K_GAME,{edit:S.gEdit,d:S.gd,pid:S.pid});else if(S.view==='sessionform'&&S.sd)lsSet(K_SESS,{edit:S.sEdit,d:S.sd,pid:S.pid});else if(S.view==='boardedit'&&S.bd)lsSet(K_BOARD,{edit:S.bEdit,d:S.bd});}
 function edited(){persist();render();}
 let toastT;
 function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},2800);}
@@ -886,13 +1154,15 @@ async function saveGame(btn){
   if(!S.db)return toast(NO_DB);
   const g=normGame(clone(S.gd));delete g.pending;delete g.id;
   if(!g.date)return toast('Add the date of the game.');
-  if(!g.played.gk&&!g.played.st)return toast('Pick at least one position he played.');
+  if(!g.played.young&&!g.played.gk&&!g.played.st)return toast('Pick at least one position he played.');
+  if(!g.played.young)delete g.young;
   if(!g.played.gk){g.zones=[];g.gk=newGame().gk;g.gkMins='';}
   if(!g.played.st){g.shots=[];g.st={assists:0,chances:0};g.stMins='';}
   for(const k of Object.keys(g.errors)){if(!ERR[k]||!(+g.errors[k]>0)||!g.played[ERR[k].pos])delete g.errors[k];}
   g.wells=g.wells.filter(k=>WELL[k]&&(WELL[k].pos==='both'||g.played[WELL[k].pos]));
   g.opponent=String(g.opponent||'').trim().slice(0,60);
   g.gkMins=g.gkMins===''?null:+g.gkMins;g.stMins=g.stMins===''?null:+g.stMins;
+  if(!g.playerId)g.playerId=S.pid;
   const now=new Date().toISOString();g.updatedAt=now;if(!g.createdAt)g.createdAt=now;
   const ref=S.gEdit?S.db.doc('games/'+S.gEdit):S.db.collection('games').doc();
   btn.disabled=true;btn.textContent='Saving...';
@@ -901,23 +1171,33 @@ async function saveGame(btn){
 }
 async function saveSession(btn){
   if(!S.db)return toast(NO_DB);
-  const s=clone(S.sd);delete s.id;
-  if(!s.date)return toast('Add the date.');
-  s.items=s.items.filter(i=>DRILL[i.drillId]).map(i=>{const t=DRILL[i.drillId].score.type;return {drillId:i.drillId,score:(t==='done'||i.score===''||i.score==null)?null:Number(i.score),outOf:t==='of'?(Number(i.outOf)||DRILL[i.drillId].score.n):null};});
-  if(!s.items.length&&!s.minutes)return toast('Add a drill or the minutes trained.');
-  s.minutes=s.minutes===''||s.minutes==null?null:Number(s.minutes);
-  const now=new Date().toISOString();s.updatedAt=now;if(!s.createdAt)s.createdAt=now;
+  const x=clone(S.sd);delete x.id;
+  if(!x.date)return toast('Add the date.');
+  x.items=x.items.filter(i=>DRILL[i.drillId]).map(i=>{const t=DRILL[i.drillId].score.type,o={drillId:i.drillId,score:(t==='done'||i.score===''||i.score==null)?null:Number(i.score),outOf:t==='of'?(Number(i.outOf)||DRILL[i.drillId].score.n):null};if(i.dose)o.dose=i.dose;return o;});
+  if(!x.items.length&&!x.minutes)return toast('Add a drill or the minutes trained.');
+  x.minutes=x.minutes===''||x.minutes==null?null:Number(x.minutes);
+  if(!x.playerId)x.playerId=S.pid;
+  const now=new Date().toISOString();x.updatedAt=now;if(!x.createdAt)x.createdAt=now;
   const ref=S.sEdit?S.db.doc('sessions/'+S.sEdit):S.db.collection('sessions').doc();
   btn.disabled=true;btn.textContent='Saving...';
-  try{await ref.set(s);}catch(e){btn.disabled=false;btn.textContent='Save training';return toast(dbMsg(e));}
-  lsSet(K_SESS,null);S.sd=null;S.sEdit=null;S.sResumed=false;toast('Training saved');go('train');
+  try{await ref.set(x);}catch(e){btn.disabled=false;btn.textContent='Save training';return toast(dbMsg(e));}
+  const pd=playerDoc();
+  if(x.programKey&&pd&&pd.program&&PROGRAM[pd.program.id]){pd.program.done=Object.assign({},pd.program.done,{[x.programKey]:x.date});try{await writePlayer(pd);}catch(e){}}
+  lsSet(K_SESS,null);S.sd=null;S.sEdit=null;S.sResumed=false;toast(x.programKey?'Session saved. Nice work!':'Training saved');go(x.programKey?'home':'train');
 }
 async function saveProfile(btn){
   if(!S.db)return toast(NO_DB);
-  const p={name:String(S.pf.name||'').trim().slice(0,40),team:String(S.pf.team||'').trim().slice(0,60),preferred:S.pf.preferred==='st'?'st':'gk',weeklyGoal:clamp(+S.pf.weeklyGoal||3,1,7)};
+  const f=S.pf,by=+f.birthYear;
+  if(f.birthYear!==''&&f.birthYear!=null&&!(by>=THIS_YEAR-25&&by<=THIS_YEAR-3))return toast('Check the birth year. It should look like '+(THIS_YEAR-11)+'.');
+  const base=S.pfNew?{}:(playerDoc()||{});
+  const p=Object.assign(base,{name:String(f.name||'').trim().slice(0,40),team:String(f.team||'').trim().slice(0,60),birthYear:by||null,
+    preferred:['gk','st','all'].indexOf(f.preferred)>=0?f.preferred:'gk',weeklyGoal:clamp(+f.weeklyGoal||3,1,7),goals:(f.goals||[]).filter(g=>GOAL[g])});
+  delete p.id;if(!p.createdAt)p.createdAt=new Date().toISOString();
+  const ref=S.pfNew?S.db.collection('players').doc():S.db.doc('players/'+S.pid);
   btn.disabled=true;
-  try{await S.db.doc('meta/profile').set(p);}catch(e){btn.disabled=false;return toast(dbMsg(e));}
-  S.profile=p;S.pf=null;toast('Player saved');go('home');
+  try{await ref.set(p);}catch(e){btn.disabled=false;return toast(dbMsg(e));}
+  if(S.pfNew){S.pid=ref.id;lsSet(K_PLAYER,ref.id);applyPlayer();}
+  S.pf=null;S.pfNew=false;toast('Player saved');go('home');
 }
 async function delDoc(path,msg,back){
   if(!S.db)return toast(NO_DB);
@@ -937,8 +1217,29 @@ const A={
   go:t=>{if(t.dataset.v==='player'){A.openPlayer();return;}go(t.dataset.v);},
   game:t=>go('game',t.dataset.id),
   drill:t=>go('drill',t.dataset.id),
-  openPlayer:()=>{S.pf=clone(S.profile);go('player');},
-  newGame:()=>{const s=lsGet(K_GAME);if(s&&s.d&&!s.edit){S.gd=normGame(s.d);S.gResumed=true;}else{S.gd=newGame();S.gResumed=false;}S.gEdit=null;go('gameform');persist();},
+  openPlayer:()=>{S.pf=clone(S.profile);S.pfNew=false;go('player');},
+  addPlayer:()=>{S.pf=Object.assign(defaultProfile(),{preferred:'all'});S.pfNew=true;go('player');},
+  pickPlayer:t=>{S.pid=t.dataset.id;lsSet(K_PLAYER,S.pid);applyPlayer();S.drillPos='all';S.allSess=false;go(['home','games','train','progress','board'].indexOf(S.view)>=0?S.view:'home');},
+  pgoal:t=>{const g=S.pf.goals||(S.pf.goals=[]),i=g.indexOf(t.dataset.id);if(i<0)g.push(t.dataset.id);else g.splice(i,1);render();},
+  delPlayer:t=>confirmTap(t,async()=>{
+    if(!S.db||S.players.length<2)return;const id=S.pid;
+    try{
+      for(const g of S.allGames.filter(x=>x.playerId===id))await S.db.doc('games/'+g.id).delete();
+      for(const x of S.allSessions.filter(y=>y.playerId===id))await S.db.doc('sessions/'+x.id).delete();
+      await S.db.doc('players/'+id).delete();
+    }catch(e){return toast(dbMsg(e));}
+    S.pf=null;applyPlayer();lsSet(K_PLAYER,S.pid);toast('Player removed');go('home');
+  }),
+  openProgram:t=>go('program',t.dataset.id),
+  progBegin:async t=>{
+    const P=PROGRAM[t.dataset.id],pd=playerDoc();if(!P||!pd||!S.db)return;
+    pd.program={id:P.id,start:todayISO(),done:{}};if((pd.goals||[]).indexOf(P.goal)<0)pd.goals=(pd.goals||[]).concat(P.goal);
+    try{await writePlayer(pd);}catch(e){return toast(dbMsg(e));}
+    toast('Program started');render();
+  },
+  progStop:t=>confirmTap(t,async()=>{const pd=playerDoc();if(!pd)return;pd.program=null;try{await writePlayer(pd);}catch(e){return toast(dbMsg(e));}toast('Program stopped');go('train');}),
+  progStart:()=>{const nx=progNext();if(!nx)return;const d=newSession();d.items=nx.items.map(([id,dose])=>mkItem(id,dose));d.programKey=nx.key;d.programLabel='Week '+nx.week+', '+nx.name;S.sd=d;S.sEdit=null;S.sResumed=false;go('sessionform');persist();},
+  newGame:()=>{const s=lsGet(K_GAME);if(s&&s.d&&!s.edit&&s.pid===S.pid){S.gd=normGame(s.d);S.gResumed=true;}else{S.gd=newGame();S.gResumed=false;}S.gEdit=null;go('gameform');persist();},
   freshGame:()=>{S.gd=newGame();S.gResumed=false;edited();},
   editGame:t=>{const g=S.games.find(x=>x.id===t.dataset.id);if(!g)return;S.gd=normGame(clone(g));delete S.gd.id;S.gEdit=g.id;S.gResumed=false;go('gameform');persist();},
   formBack:()=>{if(S.gEdit)go('game',S.gEdit);else go('home');},
@@ -958,14 +1259,14 @@ const A={
   saveGame:t=>saveGame(t),
   delGame:t=>confirmTap(t,()=>delDoc('games/'+t.dataset.id,'Game deleted','games')),
   newSession:t=>{
-    const id=t.dataset.id,s=lsGet(K_SESS),had=!!(s&&s.d&&!s.edit);let d=had?normSession(s.d):null;
+    const id=t.dataset.id,s=lsGet(K_SESS),had=!!(s&&s.d&&!s.edit&&s.pid===S.pid);let d=had?normSession(s.d):null;
     if(id){if(!d||d.date!==todayISO())d=newSession();if(!d.items.some(i=>i.drillId===id))d.items.push(mkItem(id));}
     else if(!d)d=newSession();
     S.sd=d;S.sEdit=null;S.sResumed=had&&!id;go('sessionform');persist();
   },
   freshSession:()=>{S.sd=newSession();S.sResumed=false;edited();},
   editSession:t=>{const s=S.sessions.find(x=>x.id===t.dataset.id);if(!s)return;S.sd=normSession(clone(s));delete S.sd.id;S.sEdit=s.id;S.sResumed=false;go('sessionform');persist();},
-  addItem:()=>{const used=new Set(S.sd.items.map(i=>i.drillId));const pick=focusDrillIds().find(id=>!used.has(id))||(DRILLS.find(d=>!used.has(d.id))||DRILLS[0]).id;S.sd.items.push(mkItem(pick));edited();},
+  addItem:()=>{const used=new Set(S.sd.items.map(i=>i.drillId));const pick=focusDrillIds().find(id=>!used.has(id))||(DRILLS.find(d=>fitsAge(d)&&!used.has(d.id))||DRILLS[0]).id;S.sd.items.push(mkItem(pick));edited();},
   delItem:t=>{S.sd.items.splice(+t.dataset.i,1);edited();},
   saveSession:t=>saveSession(t),
   delSession:t=>confirmTap(t,()=>delDoc('sessions/'+t.dataset.id,'Training deleted','train')),
@@ -979,7 +1280,7 @@ const A={
   snoozeBackup:()=>{lsSet(K_SNOOZE,new Date().toISOString());render();},
   importPick:()=>{const f=$('#importFile');f.value='';f.click();},
   importConfirm:t=>confirmTap(t,()=>{
-    try{S.db.replaceAll(S.pendingImport.data);}catch(e){return toast(dbMsg(e));}
+    try{S.db.replaceAll(S.pendingImport.data);migrate(S.db);}catch(e){return toast(dbMsg(e));}
     S.pendingImport=null;S.pf=null;
     lsSet(K_GAME,null);lsSet(K_SESS,null);lsSet(K_BOARD,null);toast('Backup restored');go('home');
   }),
@@ -1031,6 +1332,7 @@ document.addEventListener('input',e=>{
   let v=t.value;if(t.type==='number')v=v===''?'':Number(v);
   setPath(d,t.dataset.f,v);
   if(S.view==='boardedit'&&/^tokens\./.test(t.dataset.f)){persist();redrawField();return;}
+  if(S.view==='player'&&t.dataset.f==='birthYear'){const el=$('.agechip'),a=ageOf(S.pf);if(el)el.textContent=a!=null?a:'-';return;}
   if(/\.drillId$/.test(t.dataset.f)){const i=+t.dataset.f.split('.')[1];if(DRILL[v]&&d.items[i]){d.items[i].outOf=DRILL[v].score.n||'';d.items[i].score='';}edited();return;}
   persist();
 });
@@ -1081,7 +1383,7 @@ function makeLocalDB(){
     doc:path=>{const p=path.split('/');return ref(p[0],p[1]);},
     collection:c=>({doc:id=>ref(c,id||newId()),onSnapshot:fn=>{(listeners[c]||(listeners[c]=[])).push(fn);setTimeout(()=>fn(snapshot(c)),0);return ()=>{listeners[c]=listeners[c].filter(f=>f!==fn);};}}),
     exportAll:()=>clone(data),
-    replaceAll:next=>{const prev=data;data={};['games','sessions','meta','boards'].forEach(c=>{data[c]=next[c]&&typeof next[c]==='object'?clone(next[c]):{};});try{write();}catch(e){data=prev;throw e;}emitAll();}
+    replaceAll:next=>{const prev=data;data={};['games','sessions','meta','boards','players'].forEach(c=>{data[c]=next[c]&&typeof next[c]==='object'?clone(next[c]):{};});try{write();}catch(e){data=prev;throw e;}emitAll();}
   };
 }
 
@@ -1104,14 +1406,17 @@ async function exportBackup(){
 /* ---------- Example data ---------- */
 async function loadExamples(){
   if(!S.db)return toast(NO_DB);
-  const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return isoOf(d);},now=new Date().toISOString();
-  const docs=[
-    ['games','example-1',{date:ago(7),opponent:'Example FC',venue:'home',comp:'League',us:2,them:1,played:{gk:true,st:true},gkMins:30,stMins:25,gk:{saves:5,catches:4,drops:2,high:1,distGood:6,distBad:3},zones:[{z:'BL',saveable:true}],st:{assists:0,chances:1},shots:[{x:44,y:14,r:'goal'},{x:62,y:20,r:'off'},{x:30,y:26,r:'on'}],errors:{gk_handling:2,gk_dist:2,st_offtarget:1,st_offside:1},wells:['w_bigsave','w_goal','w_effort'],ratings:{effort:5,confidence:4,overall:4},great:'Diving save at the near post in the first half.',work:'Hold on to shots that come straight at him.',notes:''}],
-    ['games','example-2',{date:ago(1),opponent:'Example Rovers',venue:'away',comp:'League',us:1,them:3,played:{gk:true,st:false},gkMins:60,stMins:null,gk:{saves:6,catches:3,drops:2,high:0,distGood:5,distBad:4},zones:[{z:'BR',saveable:false},{z:'BC',saveable:true},{z:'TL',saveable:false}],st:{assists:0,chances:0},shots:[],errors:{gk_handling:1,gk_set:2,gk_dist:1,gk_talk:1},wells:['w_bigsave','w_bounce'],ratings:{effort:4,confidence:3,overall:3},great:'Kept his head up after the second goal.',work:'Get set before the shooter strikes.',notes:''}],
-    ['sessions','example-s1',{date:ago(5),minutes:30,items:[{drillId:'gk_wcatch',score:14,outOf:20},{drillId:'st_corners',score:8,outOf:20}],feel:4,notes:''}],
-    ['sessions','example-s2',{date:ago(3),minutes:25,items:[{drillId:'gk_wcatch',score:16,outOf:20},{drillId:'gk_setstep',score:9,outOf:15}],feel:4,notes:''}]
+  const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return isoOf(d);},now=new Date().toISOString(),pid=S.pid;
+  const docs=isYoung()?[
+    ['games','example-y1-'+pid,{date:ago(6),opponent:'Example Stars',venue:'home',comp:'League',us:3,them:2,played:{young:true},young:{goals:1,beat:3,won:2},errors:{y_bunch:2,y_farball:1},wells:['yw_shot','yw_dribble','yw_fun'],ratings:{fun:5,effort:4},great:'Scored his first goal of the season.',work:'Keep the ball close when he dribbles.',notes:''}],
+    ['sessions','example-ys1-'+pid,{date:ago(3),minutes:20,items:[{drillId:'y_redlight',score:7,outOf:10},{drillId:'y_toetaps',score:24,outOf:null}],feel:5,notes:''}]
+  ]:[
+    ['games','example-1-'+pid,{date:ago(7),opponent:'Example FC',venue:'home',comp:'League',us:2,them:1,played:{gk:true,st:true},gkMins:30,stMins:25,gk:{saves:5,catches:4,drops:2,high:1,distGood:6,distBad:3},zones:[{z:'BL',saveable:true}],st:{assists:0,chances:1},shots:[{x:44,y:14,r:'goal'},{x:62,y:20,r:'off'},{x:30,y:26,r:'on'}],errors:{gk_handling:2,gk_dist:2,st_offtarget:1,st_offside:1},wells:['w_bigsave','w_goal','w_effort'],ratings:{effort:5,confidence:4,overall:4},great:'Diving save at the near post in the first half.',work:'Hold on to shots that come straight at him.',notes:''}],
+    ['games','example-2-'+pid,{date:ago(1),opponent:'Example Rovers',venue:'away',comp:'League',us:1,them:3,played:{gk:true,st:false},gkMins:60,stMins:null,gk:{saves:6,catches:3,drops:2,high:0,distGood:5,distBad:4},zones:[{z:'BR',saveable:false},{z:'BC',saveable:true},{z:'TL',saveable:false}],st:{assists:0,chances:0},shots:[],errors:{gk_handling:1,gk_set:2,gk_dist:1,gk_talk:1},wells:['w_bigsave','w_bounce'],ratings:{effort:4,confidence:3,overall:3},great:'Kept his head up after the second goal.',work:'Get set before the shooter strikes.',notes:''}],
+    ['sessions','example-s1-'+pid,{date:ago(5),minutes:30,items:[{drillId:'gk_wcatch',score:14,outOf:20},{drillId:'st_corners',score:8,outOf:20}],feel:4,notes:''}],
+    ['sessions','example-s2-'+pid,{date:ago(3),minutes:25,items:[{drillId:'gk_wcatch',score:16,outOf:20},{drillId:'gk_setstep',score:9,outOf:15}],feel:4,notes:''}]
   ];
-  try{for(const [c,id,d] of docs)await S.db.collection(c).doc(id).set(Object.assign(d,{example:true,createdAt:now,updatedAt:now}));}
+  try{for(const [c,id,d] of docs)await S.db.collection(c).doc(id).set(Object.assign(d,{playerId:pid,example:true,createdAt:now,updatedAt:now}));}
   catch(e){return toast(dbMsg(e));}
   toast('Example data loaded');
 }
@@ -1121,10 +1426,12 @@ function connect(){
   S.checked=true;
   if(!storageWorks()){S.db=null;S.canWrite=false;render();return;}
   const db=makeLocalDB();S.db=db;S.canWrite=true;
-  db.collection('games').onSnapshot(s=>{S.games=s.docs.map(x=>Object.assign(clone(x.data()),{id:x.id}));S.gotGames=true;refresh();});
-  db.collection('sessions').onSnapshot(s=>{S.sessions=s.docs.map(x=>Object.assign(clone(x.data()),{id:x.id}));S.gotSessions=true;refresh();});
-  db.collection('boards').onSnapshot(s=>{S.boards=s.docs.map(x=>Object.assign(clone(x.data()),{id:x.id}));S.gotBoards=true;refresh();});
-  db.collection('meta').onSnapshot(s=>{const p=s.docs.find(x=>x.id==='profile');S.profile=Object.assign(defaultProfile(),p?clone(p.data()):{});refresh();});
+  migrate(db);
+  const rows=x=>x.docs.map(d=>Object.assign(clone(d.data()),{id:d.id}));
+  db.collection('players').onSnapshot(x=>{S.players=rows(x).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')||(a.name||'').localeCompare(b.name||''));applyPlayer();refresh();});
+  db.collection('games').onSnapshot(x=>{S.allGames=rows(x);applyPlayer();S.gotGames=true;refresh();});
+  db.collection('sessions').onSnapshot(x=>{S.allSessions=rows(x);applyPlayer();S.gotSessions=true;refresh();});
+  db.collection('boards').onSnapshot(x=>{S.boards=rows(x);S.gotBoards=true;refresh();});
 }
 (function start(){
   const h=location.hash.slice(1);if(['games','train','progress','board'].indexOf(h)>=0)S.view=h;

@@ -11,6 +11,17 @@ works offline at the field. There is no App Store, no account, and no cost.
 
 ## What's in it
 
+- **More than one player**: add each child with their birth year. Each has
+  their own games, training, goals and progress; switch with the name chips at
+  the top. Drills, game logging and Board moves adjust to each child's age:
+  - **Ages 5 to 8**: fun practice games (Red Light Green Light, Shark Attack,
+    Tail Tag and more), a simpler game log with "things to practice" instead of
+    mistakes, and fun and effort ratings.
+  - **Ages 9 and up**: the full keeper and striker drills and game stats.
+- **6-week speed program** (ages 9 to 14): two 20-minute sessions a week, with
+  a 20 m sprint test in weeks 1, 4 and 6. "Start this session" on Home loads
+  that session's drills and reps into a training log.
+
 - **Home**: this week's training count, last result, and a "Work on this week"
   list built from his top 3 mistakes in the last 3 games, each linked to drills.
 - **Games**: a 2-minute game log. Saves, catches, drops, high balls and
@@ -76,7 +87,9 @@ soccer/
 ```
 
 To add a drill, append an entry to `DRILLS` in `app.js`. List the mistake ids
-it helps with in `fixes` so it shows up in the weekly focus list.
+it helps with in `fixes` so it shows up in the weekly focus list, and set
+`ages` (for example `[9,18]`) so it only shows for players of the right age.
+The speed program lives in `PROGRAMS` in `app.js`.
 
 To add a ready-made move, append an entry to `plays.js`. The comment at the
 top explains the field coordinates. The easiest way is to build the move on the
