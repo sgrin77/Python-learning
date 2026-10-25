@@ -104,3 +104,33 @@ def test_market_window_and_backoff():
     assert not market_window(datetime(2026, 10, 3, 14, 0, tzinfo=timezone.utc))  # Saturday
     assert not market_window(datetime(2026, 10, 2, 23, 0, tzinfo=timezone.utc))  # 7pm ET
     assert backoff(120, 1) == 240 and backoff(120, 10) == 1800
+
+
+def test_sign_in_pages_are_paused_not_hammered(tmp_path):
+    cfg = write_config(tmp_path)
+    pages = {
+        "view=": (401, '{"error": "Unauthorized"}'),
+        "/transactions": (401, "<html><body><h1>Please sign in</h1></body></html>"),
+        "/portfolio": (200, (FIX / "portfolio.html").read_text()),
+    }
+    fetcher = FakeFetcher(pages)
+    tracker = Tracker(cfg, fetcher, Dispatcher([Recorder()]))
+    tracker.poll(T0)
+    assert len(fetcher.requested) == 4
+    assert set(tracker.paused_until) == {"holdings_csv", "transactions_csv", "transactions_page"}
+
+    fetcher.requested.clear()
+    tracker.poll(T0 + timedelta(minutes=2))
+    assert len(fetcher.requested) == 1 and "/portfolio" in fetcher.requested[0]
+    assert tracker.failures == 0  # holdings and orders still came through
+
+    fetcher.requested.clear()
+    tracker.poll(T0 + timedelta(minutes=61))
+    assert len(fetcher.requested) == 4
+
+
+def test_401_is_sign_in_not_block():
+    r = FetchResult("u", 401, "<html><body><h1>Please   sign in</h1></body></html>")
+    assert r.needs_login and not r.blocked and r.snippet() == "Please sign in"
+    captcha = FetchResult("u", 401, "<html>geo.captcha-delivery.com</html>")
+    assert captcha.blocked and not captcha.needs_login

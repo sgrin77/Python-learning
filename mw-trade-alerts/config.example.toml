@@ -16,6 +16,7 @@ holdings_quiet_minutes = 30
 method = "http"        # "http" (default) or "browser" (real Chrome via Playwright, if http gets blocked)
 cookie = ""            # optional: paste your browser's Cookie header if the game needs you signed in
 headless = true        # browser method only
+browser = ""           # browser method: "msedge" or "chrome" uses the one already installed
 browser_profile = "browser-profile"
 
 [mirror]

@@ -187,8 +187,27 @@ class PortfolioPage:
     holdings: Optional[list[Holding]] = None
     orders: Optional[list[Order]] = None
     net_worth: Optional[float] = None
+    cash: Optional[float] = None
     links: dict[str, str] = field(default_factory=dict)
     recognised: bool = False
+
+
+def all_cash(net_worth: Optional[float], cash: Optional[float]) -> bool:
+    """True when cash is within 1% of net worth, i.e. the player holds no stock."""
+    return bool(net_worth) and cash is not None and abs(net_worth - cash) <= 0.01 * abs(net_worth)
+
+
+def _profile_stats(soup) -> list[tuple[str, float]]:
+    """[(label, value)] from the stats box at the top of the portfolio page, in page order."""
+    stats = []
+    for item in soup.select(".element--profile .kv__item"):
+        primary = item.select_one(".primary")
+        value = parse_number(primary.get_text()) if primary else None
+        if value is None:
+            continue
+        label = item.get_text(" ", strip=True).replace(primary.get_text(" ", strip=True), "")
+        stats.append((" ".join(label.lower().split()), value))
+    return stats
 
 
 _SHARES_IN_TEXT = re.compile(r"([\d,]*\.?\d+)\s*shares?\b", re.I)
@@ -267,9 +286,16 @@ def parse_portfolio_html(html: str, base_url: str, pub: str) -> PortfolioPage:
     # An empty order list is only trustworthy if this really was a portfolio page.
     page.orders = orders if (orders or page.recognised) else None
 
-    first_stat = soup.select_one(".element--profile .kv__item .primary")
-    if first_stat:
-        page.net_worth = parse_number(first_stat.get_text())
+    stats = _profile_stats(soup)
+    if stats:
+        page.net_worth = stats[0][1]  # the first stat is always the portfolio's net worth
+    page.cash = next((v for label, v in stats if "cash remaining" in label or label == "cash"),
+                     None)
+
+    # With no stock left the holdings table vanishes. Only call that "all cash" when the
+    # cash balance agrees; otherwise it may just be a page that didn't finish loading.
+    if page.holdings is None and page.recognised and all_cash(page.net_worth, page.cash):
+        page.holdings = []
 
     for a in soup.select("a[href]"):
         href = a["href"]

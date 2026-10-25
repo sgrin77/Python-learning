@@ -108,8 +108,11 @@ class Snapshot:
     transactions: Optional[list[Transaction]] = None
     orders: Optional[list[Order]] = None
     net_worth: Optional[float] = None
-    blocked: bool = False
+    cash: Optional[float] = None
+    blocked: bool = False  # bot protection (403/429/captcha)
+    needs_login: bool = False  # 401: MarketWatch wants a signed-in user
     errors: list[str] = field(default_factory=list)
+    failed: dict[str, tuple[int, str]] = field(default_factory=dict)  # name -> (status, snippet)
 
     def anything_read(self) -> bool:
         return any(x is not None for x in (self.holdings, self.transactions, self.orders))

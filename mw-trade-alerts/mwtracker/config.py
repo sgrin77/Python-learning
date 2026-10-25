@@ -25,6 +25,7 @@ class Config:
     cookie: str = ""
     headless: bool = True
     browser_profile: str = "browser-profile"
+    browser: str = ""
     state_file: Path = Path("state.json")
     debug_dir: Path = Path("debug")
     log_file: str = "tracker.log"
@@ -66,6 +67,7 @@ def load_config(path: str | Path) -> Config:
         cookie=fetch.get("cookie", ""),
         headless=bool(fetch.get("headless", True)),
         browser_profile=str(here / fetch.get("browser_profile", "browser-profile")),
+        browser=fetch.get("browser", ""),
         state_file=here / storage.get("state_file", "state.json"),
         debug_dir=here / storage.get("debug_dir", "debug"),
         log_file=str(here / log_name) if log_name else "",

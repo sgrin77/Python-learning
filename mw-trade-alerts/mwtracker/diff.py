@@ -28,6 +28,7 @@ from .models import (
     Snapshot,
     Transaction,
 )
+from .parse import all_cash
 
 PAST_TENSE = {BUY: "bought", SELL: "sold", SHORT: "shorted", COVER: "covered (bought back)"}
 
@@ -48,6 +49,7 @@ def fresh_state() -> dict:
         "seen_transactions": {},
         "orders": {},
         "net_worth": None,
+        "cash": None,  # saved together with "holdings" so the two always match
         "recent_trades": {},
         "inferred": {},
         "empty_holdings_strikes": 0,
@@ -105,6 +107,38 @@ def _trade_event(t: Transaction, settings: DiffSettings, their_value: Optional[f
                  priority="default" if confirmed else "high", action=t.action, symbol=t.symbol)
 
 
+def _price_from_cash(action: str, shares: float, cash_delta: Optional[float]) -> Optional[float]:
+    """A buy spends cash and a sale brings it in, so cash moved / shares moved ~ the price."""
+    if cash_delta is None or not shares:
+        return None
+    if (action == BUY and cash_delta < 0) or (action == SELL and cash_delta > 0):
+        return abs(cash_delta) / shares
+    return None
+
+
+def _position_event(symbol: str, side: str, before: float, after: float, action: str,
+                    price: Optional[float], settings: DiffSettings,
+                    their_value: Optional[float], history_readable: bool) -> Event:
+    delta = abs(after - before)
+    growing = after > before
+    what = ("opened" if before == 0 else "closed" if after == 0
+            else "added to" if growing else "trimmed")
+    title = f"{action} ~{_shares(delta)} {symbol}"
+    title += f" @ ~{_money(price)}" if price else " (holdings change)"
+    lines = [f"{settings.player_name} {what} a {side.lower()} position in {symbol}: "
+             f"{_shares(before)} -> {_shares(after)} shares."]
+    if price:
+        lines.append(f"Price: about {_money(price)}/share, worked out from their cash balance "
+                     f"(~{_money(price * delta)} changed hands).")
+    else:
+        lines.append("Price not known yet.")
+    if history_readable:
+        lines.append("A confirmation with the exact fill follows once it shows in their history.")
+    lines.append(_mirror_line(action, symbol, delta, settings, their_value))
+    return Event(kind="position", priority="high", action=action, symbol=symbol,
+                 title=title, body="\n".join(lines))
+
+
 # ---------------------------------------------------------------- the three signals
 
 
@@ -155,7 +189,9 @@ def _health(state: dict, snap: Snapshot, settings: DiffSettings, now: datetime) 
     health["failures"] += 1
     if health["failures"] >= settings.failure_alert_after and not health["alerted"]:
         health["alerted"] = True
-        why = "MarketWatch is blocking the requests" if snap.blocked else "the pages could not be read"
+        why = ("MarketWatch is blocking the requests" if snap.blocked
+               else "MarketWatch wants you signed in" if snap.needs_login
+               else "the pages could not be read")
         return [Event(
             kind="health", priority="high",
             title="Tracker can't see the portfolio",
@@ -222,17 +258,24 @@ def process(state: Optional[dict], snap: Snapshot, settings: DiffSettings,
     if snap.holdings is not None:
         current_h = {h.key(): h.shares for h in snap.holdings}
         prev_h = st["holdings"]
-        looks_like_glitch = (not current_h and len(prev_h) >= 2 and not new_txns
+        # Everything vanished, with no sale in the history and no cash balance to back it
+        # up: wait one more poll in case it was just a half-loaded page.
+        looks_like_glitch = (not current_h and bool(prev_h) and not new_txns
+                             and not all_cash(snap.net_worth, snap.cash)
                              and st["empty_holdings_strikes"] < 1)
         if not st["initialized"]["holdings"]:
-            st["holdings"] = current_h
+            st["holdings"], st["cash"] = current_h, snap.cash
             st["initialized"]["holdings"] = True
         elif looks_like_glitch:
-            # Everything vanished with no sell in the history: wait one more poll to be sure.
             st["empty_holdings_strikes"] += 1
         else:
             st["empty_holdings_strikes"] = 0
-            for symbol, side, before, after in _holding_moves(prev_h, current_h):
+            moves = _holding_moves(prev_h, current_h)
+            prev_cash = st.get("cash")
+            # Cash only tells us the price when exactly one position moved.
+            cash_delta = (snap.cash - prev_cash if len(moves) == 1 and snap.cash is not None
+                          and prev_cash is not None else None)
+            for symbol, side, before, after in moves:
                 if _within(st["recent_trades"].get(symbol), now, settings.holdings_quiet_minutes):
                     continue  # already explained by a transaction alert
                 growing = after > before
@@ -242,20 +285,12 @@ def process(state: Optional[dict], snap: Snapshot, settings: DiffSettings,
                     action = SHORT if growing else COVER
                 if (symbol, action) in traded_now:
                     continue
-                delta = abs(after - before)
-                what = ("opened" if before == 0 else "closed" if after == 0
-                        else "added to" if growing else "trimmed")
-                events.append(Event(
-                    kind="position", priority="high", action=action, symbol=symbol,
-                    title=f"{action} ~{_shares(delta)} {symbol} (holdings change)",
-                    body=(f"{settings.player_name} {what} a {side.lower()} position in {symbol}: "
-                          f"{_shares(before)} -> {_shares(after)} shares.\n"
-                          "Price not known yet; a confirmation follows once it shows in their "
-                          "transaction history.\n"
-                          + _mirror_line(action, symbol, delta, settings, their_value)),
-                ))
+                price = _price_from_cash(action, abs(after - before), cash_delta)
+                events.append(_position_event(symbol, side, before, after, action, price,
+                                              settings, their_value,
+                                              history_readable=snap.transactions is not None))
                 st["inferred"][f"{symbol}|{action}"] = now.isoformat()
-            st["holdings"] = current_h
+            st["holdings"], st["cash"] = current_h, snap.cash
 
     if starting:
         events.append(_startup_event(snap, settings, their_value))
@@ -270,6 +305,8 @@ def _startup_event(snap: Snapshot, settings: DiffSettings, their_value: Optional
              "you'll be alerted on anything new."]
     if their_value:
         lines.append(f"Portfolio value: {_money(their_value)}")
+    if snap.cash is not None:
+        lines.append(f"Cash: {_money(snap.cash)}")
     if snap.holdings is not None:
         held = ", ".join(f"{h.symbol} {_shares(h.shares)}{' (short)' if h.side != LONG_SIDE else ''}"
                          for h in sorted(snap.holdings, key=lambda h: h.symbol))

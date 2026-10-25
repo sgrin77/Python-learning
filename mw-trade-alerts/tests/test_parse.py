@@ -99,3 +99,24 @@ def test_transactions_html():
 def test_parse_portfolio_url():
     url = "https://www.marketwatch.com/games/mka-finance-club-2026-2027/portfolio?pub=fI5MMiMkkUKx"
     assert parse_portfolio_url(url) == ("mka-finance-club-2026-2027", "fI5MMiMkkUKx")
+
+
+def test_portfolio_cash_is_read_by_label():
+    page = parse_portfolio_html(read("portfolio.html"), "https://www.marketwatch.com", "PUB123")
+    assert page.cash == 78450.0  # "Cash Remaining", not "Buying Power"
+
+
+ALL_CASH_PAGE = """<div class="element element--profile"><ul>
+  <li class="kv__item"><small class="label">Net Worth</small><span class="primary">$707,886.10</span></li>
+  <li class="kv__item"><small class="label">Cash Remaining</small><span class="primary">{cash}</span></li>
+</ul></div><p>You have no holdings.</p>"""
+
+
+def test_no_holdings_table_with_matching_cash_means_all_cash():
+    page = parse_portfolio_html(ALL_CASH_PAGE.format(cash="$707,886.10"), "https://x", "P")
+    assert page.holdings == []
+
+
+def test_no_holdings_table_without_matching_cash_stays_unknown():
+    page = parse_portfolio_html(ALL_CASH_PAGE.format(cash="$12.00"), "https://x", "P")
+    assert page.holdings is None

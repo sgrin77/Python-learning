@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -18,6 +18,9 @@ from .models import Event, Snapshot
 from .schedule import backoff, next_delay
 
 log = logging.getLogger(__name__)
+
+# Pages that answered "sign in first" aren't asked again for this long.
+LOGIN_RETRY = timedelta(hours=1)
 
 
 def load_state(path: Path) -> Optional[dict]:
@@ -35,7 +38,7 @@ def save_state(path: Path, state: dict) -> None:
 
 def make_fetcher(cfg: Config) -> Fetcher:
     if cfg.fetch_method == "browser":
-        return BrowserFetcher(cfg.browser_profile, headless=cfg.headless)
+        return BrowserFetcher(cfg.browser_profile, headless=cfg.headless, browser=cfg.browser)
     return HttpFetcher(cookie=cfg.cookie)
 
 
@@ -43,16 +46,25 @@ class Tracker:
     def __init__(self, cfg: Config, fetcher: Fetcher, dispatcher: Dispatcher):
         self.cfg, self.fetcher, self.dispatcher = cfg, fetcher, dispatcher
         self.failures = 0
+        self.paused_until: dict[str, datetime] = {}
 
     def poll(self, now: Optional[datetime] = None) -> list[Event]:
         now = now or datetime.now(timezone.utc)
+        skip = {name for name, until in self.paused_until.items() if until > now}
         try:
-            snap = take_snapshot(self.fetcher, self.cfg.game, self.cfg.pub)
+            snap = take_snapshot(self.fetcher, self.cfg.game, self.cfg.pub, skip=skip)
         except Exception as exc:  # a parser bug still counts toward the "tracker is blind" alert
             log.exception("Snapshot failed")
             snap = Snapshot(errors=[f"crash: {exc}"])
+        for name, (status, _) in snap.failed.items():
+            if status == 401:
+                self.paused_until[name] = now + LOGIN_RETRY
+                log.info("%s needs a signed-in MarketWatch user; retrying in an hour", name)
         if snap.errors:
-            log.warning("Partial read: %s", "; ".join(snap.errors))
+            # While sign-in-only pages are paused, their "could not read" lines are expected.
+            quiet = skip and not snap.failed
+            log.log(logging.DEBUG if quiet else logging.WARNING, "Partial read: %s",
+                    "; ".join(snap.errors))
         events, state = process(load_state(self.cfg.state_file), snap, self.cfg.diff, now)
         for event in events:
             log.info("ALERT %s | %s", event.title, event.body.replace("\n", " | "))

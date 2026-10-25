@@ -46,7 +46,8 @@ def cmd_check(cfg) -> int:
         if len(items) > 15:
             print(f"   ... and {len(items) - 15} more")
 
-    print(f"\nPortfolio value: {snap.net_worth if snap.net_worth else 'unknown'}")
+    money = lambda x: "unknown" if x is None else f"${x:,.2f}"
+    print(f"\nPortfolio value: {money(snap.net_worth)}    Cash: {money(snap.cash)}")
     show("Holdings", snap.holdings, lambda h: f"{h.symbol:8} {h.shares:>10g}  {h.side}")
     show("Open orders", snap.orders, lambda o: o.describe())
     show("Transactions", snap.transactions,
@@ -54,6 +55,12 @@ def cmd_check(cfg) -> int:
                    f"{t.symbol:8} {'' if t.price is None else f'${t.price:,.2f}'}")
     if snap.errors:
         print("\nProblems:\n   " + "\n   ".join(snap.errors))
+    for name, (status, snippet) in snap.failed.items():
+        print(f"\n{name} (HTTP {status}) said: {snippet or '(empty response)'}")
+    if snap.needs_login:
+        print("\nMarketWatch only shows some pages to signed-in users. Holdings and open orders"
+              "\nstill work, so alerts work, but without exact fill prices. For those, see"
+              "\nREADME > 'Signing in for exact prices'.")
     if snap.blocked:
         print("\nMarketWatch blocked the request. See README > 'If MarketWatch blocks you'.")
     print(f"\nRaw responses saved in {cfg.debug_dir}/ for troubleshooting.")
@@ -75,7 +82,7 @@ def cmd_test_alert(cfg) -> int:
 
 def cmd_login(cfg) -> int:
     """Open a visible browser so you can sign in to MarketWatch once (browser method only)."""
-    fetcher = BrowserFetcher(cfg.browser_profile, headless=False)
+    fetcher = BrowserFetcher(cfg.browser_profile, headless=False, browser=cfg.browser)
     try:
         fetcher.open_for_login()
         input("Sign in to MarketWatch in the browser window, then press Enter here... ")

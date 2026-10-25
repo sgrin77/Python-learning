@@ -89,6 +89,10 @@ pip install -r requirements.txt
 cp config.example.toml config.toml # already points at the portfolio link you gave
 ```
 
+On Windows, if `.venv\Scripts\activate` says "running scripts is disabled", you can
+skip the two `venv` lines entirely: `pip install -r requirements.txt` then installs
+into your main Python, which works fine. Use `copy` instead of `cp`.
+
 1. **Check the connection.** This fetches once and prints what it understood,
    without alerting or saving state:
 
@@ -96,9 +100,12 @@ cp config.example.toml config.toml # already points at the portfolio link you ga
    python -m mwtracker check
    ```
 
-   You should see their holdings and transactions listed. If a section says
-   `COULD NOT READ`, look in `debug/` for the raw page and see
-   [If MarketWatch blocks you](#if-marketwatch-blocks-you).
+   You should see their portfolio value, cash, holdings and open orders. If
+   Transactions says `COULD NOT READ` with "sign-in required", alerts still
+   work (from holdings changes, with the price worked out from their cash);
+   see [Signing in for exact prices](#signing-in-for-exact-prices) to add the
+   exact fills. For anything else, `debug/` holds the raw pages and
+   [If MarketWatch blocks you](#if-marketwatch-blocks-you) has fixes.
 
 2. **Turn on phone alerts** (recommended). Install the free **ntfy** app
    (iOS/Android), tap *Subscribe*, and enter a long random topic name. Put the
@@ -138,19 +145,38 @@ cp config.example.toml config.toml # already points at the portfolio link you ga
   servers are more likely to be blocked by MarketWatch's bot protection than a
   home connection.
 
+## Signing in for exact prices
+
+Anyone can see a player's portfolio page, but MarketWatch only serves the
+transaction history and CSV exports to signed-in users (HTTP 401). Without them
+you still get every buy, sell, short and cover, detected from holdings changes
+and priced from the change in their cash. Signing in adds the exact fill price
+and time. While signed-out, the tracker only re-tries those pages once an hour.
+
+Sign in through a real browser that the tracker drives:
+
+1. Install Playwright: `pip install playwright`
+2. In `config.toml`, under `[fetch]`, set `method = "browser"` and
+   `browser = "msedge"` (Windows) or `browser = "chrome"`. This uses the
+   browser already on your computer. (Or leave `browser = ""` and run
+   `python -m playwright install chromium` to download one.)
+3. Run `python -m mwtracker login`, sign in to MarketWatch in the window that
+   opens, then press Enter in the terminal. The sign-in is saved in
+   `browser-profile/`, separate from your normal browser.
+4. Run `python -m mwtracker check` again. Transactions should now be listed.
+
+Your MarketWatch account may need to be a member of the same game to see
+another player's history.
+
 ## If MarketWatch blocks you
 
-MarketWatch uses bot protection, so plain requests can start getting HTTP 401/403
+MarketWatch uses bot protection, so plain requests can start getting HTTP 403
 or a captcha page. In order of effort:
 
 1. **Slow down:** raise `market_interval_seconds` to 300.
-2. **Use a real browser:**
-   ```bash
-   pip install playwright && python -m playwright install chromium
-   ```
-   then set `method = "browser"` under `[fetch]`. If the game needs a signed-in
-   account to view portfolios, run `python -m mwtracker login` once and sign in
-   in the window that opens; the session is saved in `browser-profile/`.
+2. **Use a real browser:** follow steps 1 and 2 of
+   [Signing in for exact prices](#signing-in-for-exact-prices) (signing in is
+   optional for this).
 3. **Borrow your browser's cookies:** sign in to MarketWatch in Chrome, open
    DevTools > Network, click the portfolio request, copy the `Cookie` request
    header into `cookie = "..."`. Cookies expire, so this needs redoing now and then.

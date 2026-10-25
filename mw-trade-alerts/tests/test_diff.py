@@ -145,3 +145,42 @@ def test_mirror_sizing():
     proportional = DiffSettings(my_portfolio_value=25_000)
     assert mirror_size(200, proportional, 100_000) == 50
     assert mirror_size(3, proportional, 100_000) == 0
+
+
+IBRX = Holding("IBRX", 227_747, "LONG")
+
+
+def test_selling_the_only_position_alerts_at_once_with_price_from_cash():
+    _, state = process(None, Snapshot(holdings=[IBRX], orders=[], net_worth=707_886.10, cash=0.0),
+                       SETTINGS, T0)
+    sold = Snapshot(holdings=[], orders=[], net_worth=708_000.0, cash=708_000.0)
+    events, state = process(state, sold, SETTINGS, T0 + timedelta(minutes=2))
+    (e,) = events
+    assert e.title == "SELL ~227,747 IBRX @ ~$3.11"
+    assert "closed a long position in IBRX" in e.body
+    assert "confirmation" not in e.body  # history unreadable: don't promise one
+    assert state["holdings"] == {} and state["cash"] == 708_000.0
+
+
+def test_buy_price_estimated_from_cash():
+    _, state = process(None, Snapshot(holdings=[], orders=[], net_worth=708_000.0, cash=708_000.0),
+                       SETTINGS, T0)
+    bought = Snapshot(holdings=[Holding("NVDA", 1000, "LONG")], net_worth=708_000.0, cash=576_600.0)
+    (e,) = process(state, bought, SETTINGS, T0 + timedelta(minutes=2))[0]
+    assert e.title == "BUY ~1,000 NVDA @ ~$131.40"
+
+
+def test_no_price_estimate_when_two_positions_move_at_once():
+    _, state = process(None, Snapshot(holdings=[IBRX], net_worth=708_000.0, cash=0.0), SETTINGS, T0)
+    swap = Snapshot(holdings=[Holding("NVDA", 5000, "LONG")], net_worth=708_000.0, cash=50_000.0)
+    events, _ = process(state, swap, SETTINGS, T0 + timedelta(minutes=2))
+    assert sorted(e.title for e in events) == [
+        "BUY ~5,000 NVDA (holdings change)", "SELL ~227,747 IBRX (holdings change)"]
+
+
+def test_single_position_vanishing_without_cash_proof_waits_one_poll():
+    _, state = process(None, Snapshot(holdings=[IBRX]), SETTINGS, T0)
+    events, state = process(state, Snapshot(holdings=[]), SETTINGS, T0 + timedelta(minutes=2))
+    assert events == []
+    events, _ = process(state, Snapshot(holdings=[]), SETTINGS, T0 + timedelta(minutes=4))
+    assert [e.symbol for e in events] == ["IBRX"]

@@ -12,7 +12,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Collection, Optional, Protocol
 
 from .models import Snapshot
 from .parse import (
@@ -40,11 +40,26 @@ class FetchResult:
 
     @property
     def blocked(self) -> bool:
-        return self.status in (401, 403, 429) or "captcha-delivery.com" in self.text
+        """Bot protection said no."""
+        return self.status in (403, 429) or "captcha-delivery.com" in self.text
+
+    @property
+    def needs_login(self) -> bool:
+        """The page exists but MarketWatch only shows it to signed-in users."""
+        return self.status == 401 and not self.blocked
 
     @property
     def ok(self) -> bool:
         return self.status == 200 and not self.blocked
+
+    def snippet(self, limit: int = 200) -> str:
+        """The first words of the response, to show what MarketWatch actually said."""
+        text = self.text
+        if text.lstrip()[:1] == "<":
+            from bs4 import BeautifulSoup
+
+            text = BeautifulSoup(text, "html.parser").get_text(" ")
+        return " ".join(text.split())[:limit]
 
 
 class Fetcher(Protocol):
@@ -82,18 +97,26 @@ class HttpFetcher:
 class BrowserFetcher:
     """Real browser with a saved profile, so a MarketWatch login (if needed) sticks."""
 
-    def __init__(self, profile_dir: str, headless: bool = True):
+    def __init__(self, profile_dir: str, headless: bool = True, browser: str = ""):
+        """`browser`: "" for Playwright's own Chromium, "msedge" or "chrome" for the one
+        installed on this computer, or a path to a Chromium-based browser executable."""
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise SystemExit(
-                "fetch.method = 'browser' needs Playwright:\n"
-                "  pip install playwright && python -m playwright install chromium"
+                "fetch.method = 'browser' needs Playwright:  pip install playwright\n"
+                "Then either set browser = \"msedge\" (or \"chrome\") under [fetch],\n"
+                "or download Playwright's browser:  python -m playwright install chromium"
             ) from exc
+        options: dict = {"headless": headless}
+        if browser in ("msedge", "chrome", "chrome-beta", "msedge-beta"):
+            options["channel"] = browser
+        elif browser:
+            options["executable_path"] = browser
+        if headless:
+            options["user_agent"] = USER_AGENT  # hide the "HeadlessChrome" giveaway
         self._pw = sync_playwright().start()
-        self._ctx = self._pw.chromium.launch_persistent_context(
-            profile_dir, headless=headless, user_agent=USER_AGENT
-        )
+        self._ctx = self._pw.chromium.launch_persistent_context(profile_dir, **options)
         self._page = self._ctx.pages[0] if self._ctx.pages else self._ctx.new_page()
 
     def get(self, url: str) -> FetchResult:
@@ -124,13 +147,16 @@ def game_urls(game: str, pub: str) -> dict[str, str]:
 
 
 def take_snapshot(
-    fetcher: Fetcher, game: str, pub: str, debug_dir: Optional[Path] = None
+    fetcher: Fetcher, game: str, pub: str, debug_dir: Optional[Path] = None,
+    skip: Collection[str] = (),
 ) -> Snapshot:
-    """One look at the player's portfolio: about 3 requests."""
+    """One look at the player's portfolio: 1 to 4 requests. Names in `skip` aren't fetched."""
     snap = Snapshot()
     urls = game_urls(game, pub)
 
     def get(name: str) -> Optional[str]:
+        if name in skip:
+            return None
         url = urls[name]
         try:
             result = fetcher.get(url)
@@ -143,7 +169,10 @@ def take_snapshot(
             (debug_dir / f"{name}.{ext}").write_text(result.text, encoding="utf-8")
         if not result.ok:
             snap.blocked = snap.blocked or result.blocked
-            snap.errors.append(f"{name}: HTTP {result.status}{' (blocked)' if result.blocked else ''}")
+            snap.needs_login = snap.needs_login or result.needs_login
+            why = " (blocked)" if result.blocked else " (sign-in required)" if result.needs_login else ""
+            snap.errors.append(f"{name}: HTTP {result.status}{why}")
+            snap.failed[name] = (result.status, result.snippet())
             return None
         return result.text
 
@@ -151,6 +180,7 @@ def take_snapshot(
     page = parse_portfolio_html(get("portfolio") or "", BASE_URL, pub)
     snap.orders = page.orders
     snap.net_worth = page.net_worth
+    snap.cash = page.cash
     urls.update(page.links)
 
     # 2. Holdings: the CSV export is cleanest; the page table is the fallback.
