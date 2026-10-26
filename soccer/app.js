@@ -206,6 +206,56 @@ const DRILL=Object.fromEntries(DRILLS.map(d=>[d.id,d]));
 const DRILL_AGES={gk_wcatch:[8,18],gk_scoop:[7,18],gk_setstep:[9,18],gk_collapse:[9,18],gk_angle:[10,18],gk_rebound:[9,18],gk_highball:[10,18],gk_1v1:[10,18],gk_dist:[9,18],gk_backpass:[10,18],gk_reaction:[8,18],gk_voice:[9,18],
   st_wall2:[8,18],st_corners:[7,18],st_weak:[8,18],st_cool1v1:[8,18],st_turn:[9,18],st_runs:[10,18],st_onetouch:[9,18],st_shield:[8,18],st_press:[9,18],st_decide:[8,18],both_juggle:[8,18],both_feet:[6,18]};
 DRILLS.forEach(d=>{if(!d.ages)d.ages=DRILL_AGES[d.id]||[9,18];});
+/* One plain sentence per drill, shown on cards so a parent knows what it is at a glance. */
+const DRILL_WHAT={
+  gk_wcatch:'Throw the ball at a wall and catch the rebound with your hands in a W shape.',
+  gk_scoop:'You roll or kick the ball along the ground; he gets behind it and scoops it up.',
+  gk_setstep:'He shuffles side to side between two cones and gets set before you shoot.',
+  gk_collapse:'Low diving practice that starts on his knees and builds up to standing.',
+  gk_angle:'You dribble to different spots; he steps across to cover the goal, then saves your shot.',
+  gk_rebound:'He makes a save, gets up fast, and saves a second ball on the other side.',
+  gk_highball:'You throw high balls like a cross; he calls “Keeper!” and catches them at the top.',
+  gk_1v1:'You dribble at him; he closes you down and stays big instead of diving early.',
+  gk_dist:'Rolling, throwing and kicking the ball to targets 10 to 20 meters away.',
+  gk_backpass:'You pass back to him; he touches it away from you and passes with either foot.',
+  gk_reaction:'Standing behind him, you bounce a tennis ball off a wall; he reacts and catches it.',
+  gk_voice:'He learns the 5 calls a keeper shouts and practices using them fast.',
+  gk_firststep:'You point left or right; he side-steps and dives to a cone as fast as he can.',
+  st_wall2:'Pass against a wall, control it with one touch, pass again. Count clean touches in 60 seconds.',
+  st_corners:'Shooting from the edge of the box at targets in the two bottom corners.',
+  st_weak:'Passing and shooting at a target using only his weaker foot.',
+  st_cool1v1:'He dribbles at you in goal and finishes calmly: pass it in or go around you.',
+  st_turn:'You pass to him with his back to goal; he turns and shoots within 2 touches.',
+  st_runs:'He times a curved run along a line of cones so he stays onside and gets in behind.',
+  st_onetouch:'You roll balls across the goal; he shoots first time into the far corner.',
+  st_shield:'With you leaning on his back, he keeps the ball for 5 seconds, then passes.',
+  st_press:'You point at one of 3 cones; he sprints at it on a curved run to block a pass.',
+  st_decide:'He dribbles at goal while you shout a color: one means shoot, the other means pass.',
+  both_juggle:'Keepie-uppies with feet and thighs. Log his best streak.',
+  both_feet:'Quick-step patterns through a ladder or a line of markers.',
+  sp_warmup:'Easy jogging, skips, shuffles and 3 build-up runs before any sprinting.',
+  sp_form:'High-knee marches and skips that teach a tall, fast running style.',
+  sp_falling:'He leans forward until he has to step, then sprints 10 meters. Builds fast starts.',
+  sp_reaction:'You drop a tennis ball without warning; he sprints to catch it before it bounces twice.',
+  sp_flying:'He builds up speed, then you time him over 20 meters at top speed.',
+  sp_test:'A timed 20-meter sprint from a standing start. His speed benchmark.',
+  sp_dribble:'A timed 20-meter dribble at full speed, keeping the ball under control.',
+  sp_shuttle:'A timed sprint: 5 meters one way, 10 meters back, then 5 meters to the middle.',
+  sp_bounds:'Small quick hops, then big running leaps. Builds springy, fast legs.',
+  y_redlight:'He dribbles while you call lights: green is fast, yellow is slow, red is stop.',
+  y_sharks:'He dribbles across a box while you, the shark, try to take the ball.',
+  y_bodyparts:'You call a body part; he stops the ball and touches it with that part.',
+  y_toetaps:'He taps the top of the ball with alternating feet. Count the taps in 30 seconds.',
+  y_slalom:'He dribbles in and out of a line of cones without touching them.',
+  y_monster:'You are a silly monster in goal; he dribbles up and scores on you.',
+  y_tail:'A tag game: you each tuck in a scarf tail and try to grab the other one.',
+  y_animals:'Races moving like a bear, frog, bunny, crab and cheetah.',
+  y_softcatch:'Easy catching with a soft ball: two hands, then hug it in.',
+  y_spread:'He runs to the open cone farthest from you and calls for the pass.',
+  y_nextplay:'When anyone makes a mistake, they shout “Next play!” and keep going.'
+};
+DRILLS.forEach(d=>{d.what=DRILL_WHAT[d.id]||'';});
+
 /* Things a player can choose to work on. Each lists drills in order of preference; age filtering picks the right ones. */
 const GOALS=[
   {id:'speed',label:'Speed',why:'Short, all-out efforts with full rest, at the start of a session while he is fresh.',drills:['sp_falling','sp_reaction','sp_flying','sp_dribble','sp_shuttle','sp_form','sp_bounds','gk_firststep','y_tail','y_animals']},
@@ -248,7 +298,7 @@ const PROGRAM=Object.fromEntries(PROGRAMS.map(p=>[p.id,p]));
 const ZONES=['TL','TC','TR','BL','BC','BR'];
 const ZONE_LABEL={TL:'Top left',TC:'Top middle',TR:'Top right',BL:'Bottom left',BC:'Bottom middle',BR:'Bottom right',U:'Not sure where'};
 const POS_NAME={gk:'Goalkeeper',st:'Striker',both:'Keeper + Striker',speed:'Speed and agility',young:'Game for ages 5 to 8',all:'Plays everywhere'};
-const POS_SHORT={gk:'GK',st:'ST',both:'GK + ST',speed:'Speed',young:'Ages 5-8',goal:'His goal'};
+const POS_SHORT={gk:'GK',st:'ST',both:'GK + ST',speed:'Speed',young:'Ages 5-8',aim:'His goal'};
 const RES_NAME={W:'Win',L:'Loss',D:'Draw'};
 const RATE_NAME={fun:'Fun',effort:'Effort',confidence:'Confidence',overall:'Overall'};
 const COMPS=['League','Cup','Tournament','Friendly','Scrimmage'];
@@ -397,14 +447,14 @@ function focusList(){
   const items=[],gs=games().slice(0,3),tally={},raw={};
   (S.profile.goals||[]).forEach(gid=>{
     const G=GOAL[gid],ds=goalDrills(gid,2);
-    if(G&&ds.length&&!(gid==='speed'&&progOf()))items.push({pos:'goal',area:'',title:G.label,why:G.why,drills:ds});
+    if(G&&ds.length&&!(gid==='speed'&&progOf()))items.push({pos:'aim',area:'',title:G.label,why:G.why,drills:ds});
   });
   gs.forEach((g,i)=>{for(const [k,v] of Object.entries(g.errors||{})){if(!ERR[k]||!(+v>0))continue;raw[k]=(raw[k]||0)+(+v);tally[k]=(tally[k]||0)+(+v)*(i===0?1.5:1);}});
   Object.keys(tally).sort((a,b)=>tally[b]-tally[a]).forEach(k=>{
     if(items.length>=4)return;const ds=pickDrills(k,2);if(!ds.length)return;
     items.push({pos:ERR[k].pos,area:ERR[k].area,title:ERR[k].label,why:'Happened '+raw[k]+' '+plural(raw[k],'time','times')+' in the last '+(gs.length===1?'game':gs.length+' games')+'.',drills:ds});
   });
-  const fromGames=items.some(i=>i.pos!=='goal');
+  const fromGames=items.some(i=>i.pos!=='aim');
   if(!fromGames){
     let starter;
     if(isYoung())starter=[{pos:'young',area:'Dribbling',title:'Keep the ball close',why:'Little touches are the base of everything at this age.',drills:[DRILL.y_redlight,DRILL.y_sharks]},
@@ -436,7 +486,7 @@ function stepper(label,path,val,sub,min,max){
 function rating(label,path,val,ends){
   return `<div class="rate"><span class="lbl2">${esc(label)}</span><div class="seg5" role="group" aria-label="${esc(label)}">${[1,2,3,4,5].map(n=>`<button type="button" data-a="set" data-p="${path}" data-v="${n}" class="${val===n?'on':''}" aria-pressed="${val===n}">${n}</button>`).join('')}</div><div class="rate-ends"><span>${esc(ends[0])}</span><span>${esc(ends[1])}</span></div></div>`;
 }
-function dlink(d){if(!d)return '';return `<button class="dlink" data-a="drill" data-id="${d.id}"><span>${esc(d.name)}<small>${d.mins} min · ${esc(lastLabel(d))}</small></span><span class="go" aria-hidden="true">›</span></button>`;}
+function dlink(d){if(!d)return '';return `<button class="dlink" data-a="drill" data-id="${d.id}" title="${esc(d.what)}"><span>${esc(d.name)}${d.what?`<small class="dl-what">${esc(d.what)}</small>`:''}<small>${d.mins} min · ${esc(lastLabel(d))}</small></span><span class="go" aria-hidden="true">›</span></button>`;}
 function dots(n,goal){let s='';for(let i=0;i<Math.max(n,goal);i++)s+=`<span class="dot ${i<n?'on':''}"></span>`;return s;}
 function gameRow(g){
   const r=result(g);
@@ -520,7 +570,7 @@ function programCard(){
   let h=`<section class="block"><div class="block-head"><h2>${esc(P.title)}</h2><button class="link" data-a="openProgram" data-id="${P.id}">See the plan</button></div><div class="prog">`;
   h+=`<div class="progbar" role="img" aria-label="${done} of ${all.length} sessions done"><span style="width:${Math.round(done/all.length*100)}%"></span></div>`;
   h+=`<p class="sub">${done} of ${all.length} sessions done${tests.length?` · 20 m sprint: first ${tests[0].toFixed(2)} s, best ${Math.min(...tests).toFixed(2)} s`:''}</p>`;
-  if(nx)h+=`<p class="eyebrow"><span class="tag speed">Week ${nx.week}</span>${esc(nx.name)}</p><h3>${esc(nx.focus)}</h3><ol class="prog-items">${nx.items.map(([id,dose])=>`<li><button class="dlink" data-a="drill" data-id="${id}"><span>${esc(DRILL[id].name)}<small>${esc(dose)}</small></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ol><button class="btn primary wide" data-a="progStart">Start this session</button>`;
+  if(nx)h+=`<p class="eyebrow"><span class="tag speed">Week ${nx.week}</span>${esc(nx.name)}</p><h3>${esc(nx.focus)}</h3><ol class="prog-items">${nx.items.map(([id,dose])=>`<li><button class="dlink" data-a="drill" data-id="${id}" title="${esc(DRILL[id].what)}"><span>${esc(DRILL[id].name)}<small class="dl-what">${esc(DRILL[id].what)}</small><small><b>${esc(dose)}</b></small></span><span class="go" aria-hidden="true">›</span></button></li>`).join('')}</ol><button class="btn primary wide" data-a="progStart">Start this session</button>`;
   else h+=`<h3>Program complete</h3><p>All ${all.length} sessions done. Compare his sprint tests on the Progress tab.</p>`;
   return h+'</div></section>';
 }
@@ -656,7 +706,7 @@ function renderSessionForm(){
   if(!d.items.length)h+=`<p class="muted">Add each drill he did and how he scored.</p>`;
   d.items.forEach((it,i)=>{const dr=DRILL[it.drillId];if(!dr)return;
     h+=`<div class="item"><div class="field"><label for="s-d${i}">Drill ${i+1}</label><select id="s-d${i}" data-f="items.${i}.drillId">${drillOptions(it.drillId)}</select></div>
-    <p class="sub">${it.dose?'<b>'+esc(it.dose)+'</b> \u00b7 ':''}${esc(scoreHint(dr))}</p>
+    ${dr.what?`<p class="what">${esc(dr.what)}</p>`:''}<p class="sub">${it.dose?'<b>'+esc(it.dose)+'</b> \u00b7 ':''}${esc(scoreHint(dr))}</p>
     <div class="item-score">${scoreInputs(dr,it,i)}<button type="button" class="mini" data-a="delItem" data-i="${i}">Remove</button></div></div>`;});
   h+=`<button type="button" class="btn wide" data-a="addItem">+ Add a drill</button></section>`;
   h+=`<section class="group"><h2>How did it feel?</h2>${rating('Feel','feel',d.feel,['Tough','Great'])}<div class="field"><label for="s-notes">Notes</label><textarea id="s-notes" data-f="notes" placeholder="What clicked, what was hard">${esc(d.notes)}</textarea></div></section>`;
@@ -671,7 +721,7 @@ function helpsWith(d){
 }
 function drillCard(d,f){
   const hw=helpsWith(d);
-  return `<button class="dcard" data-a="drill" data-id="${d.id}"><span class="dc-top"><span class="tag ${d.pos}">${POS_SHORT[d.pos]}</span>${f?'<span class="tag focus">Focus</span>':''}<span class="sub">${d.mins} min</span></span><span class="dc-name">${esc(d.name)}</span>${hw?`<span class="sub">Helps with ${esc(hw)}</span>`:''}<span class="dc-last">${esc(lastLabel(d))}</span></button>`;
+  return `<button class="dcard" data-a="drill" data-id="${d.id}" title="${esc(d.what)}"><span class="dc-top"><span class="tag ${d.pos}">${POS_SHORT[d.pos]}</span>${f?'<span class="tag pick">Focus</span>':''}<span class="sub">${d.mins} min</span></span><span class="dc-name">${esc(d.name)}</span>${d.what?`<span class="dc-what">${esc(d.what)}</span>`:''}${hw?`<span class="sub">Helps with ${esc(hw)}</span>`:''}<span class="dc-last">${esc(lastLabel(d))}</span></button>`;
 }
 function renderTrain(){
   const goal=+S.profile.weeklyGoal||3,wc=weekCount(0),fids=new Set(focusDrillIds()),ss=sessions(),young=isYoung(),a=ageOf();
@@ -679,7 +729,7 @@ function renderTrain(){
   h+=`<p class="muted">${wc} of ${goal} sessions this week. ${wc>=goal?'Goal reached, nice work.':(goal-wc)+' to go.'}</p>`;
   const progs=young?[]:PROGRAMS.filter(P=>fitsAge(P));
   if(progs.length)h+=`<section class="block"><h2>Programs</h2>${progs.map(P=>{const pr=progOf(),act=pr&&pr.id===P.id,all=progSessions(P),dn=act?all.filter(x=>(pr.done||{})[x.key]).length:0;
-    return `<button class="dcard" data-a="openProgram" data-id="${P.id}"><span class="dc-top"><span class="tag speed">Speed</span>${act?'<span class="tag focus">In progress</span>':''}<span class="sub">${P.weeks.length} weeks</span></span><span class="dc-name">${esc(P.title)}</span><span class="sub">${esc(P.summary)}</span>${act?`<span class="dc-last">${dn} of ${all.length} sessions done</span>`:''}</button>`;}).join('')}</section>`;
+    return `<button class="dcard" data-a="openProgram" data-id="${P.id}"><span class="dc-top"><span class="tag speed">Speed</span>${act?'<span class="tag pick">In progress</span>':''}<span class="sub">${P.weeks.length} weeks</span></span><span class="dc-name">${esc(P.title)}</span><span class="sub">${esc(P.summary)}</span>${act?`<span class="dc-last">${dn} of ${all.length} sessions done</span>`:''}</button>`;}).join('')}</section>`;
   h+=`<section class="block"><div class="block-head"><h2>Training log</h2>${ss.length>3?`<button class="link" data-a="toggleSess">${S.allSess?'Show fewer':'Show all '+ss.length}</button>`:''}</div>${S.db&&!S.gotSessions?'<p class="muted">Loading...</p>':ss.length?`<div class="list">${(S.allSess?ss:ss.slice(0,3)).map(sessRow).join('')}</div>`:`<div class="empty"><p><b>No training logged yet.</b></p><p>Pick a ${young?'game':'drill'} below, try it together, and tap Log this drill to record how it went.</p></div>`}</section>`;
   const pos=young?'all':S.drillPos;
   const inCat=d=>pos==='all'||(pos==='speed'?(d.pos==='speed'||GOAL.speed.drills.indexOf(d.id)>=0):(d.pos===pos||d.pos==='both'));
@@ -693,7 +743,7 @@ function renderDrill(){
   const d=DRILL[S.arg];if(!d){S.view='train';return renderTrain();}
   const log=drillLog(d.id),lb=d.score.type==='time';
   let h=`<div class="bar"><button class="back" data-a="go" data-v="train">‹ Train</button></div>`;
-  h+=`<header class="dhead"><p class="eyebrow"><span class="tag ${d.pos}">${POS_NAME[d.pos]}</span>${d.mins} minutes · ages ${d.ages[0]} to ${d.ages[1]}</p><h1>${esc(d.name)}</h1><p><b>You need:</b> ${esc(d.need)}</p></header>`;
+  h+=`<header class="dhead"><p class="eyebrow"><span class="tag ${d.pos}">${POS_NAME[d.pos]}</span>${d.mins} minutes · ages ${d.ages[0]} to ${d.ages[1]}</p><h1>${esc(d.name)}</h1>${d.what?`<p class="lead">${esc(d.what)}</p>`:''}<p><b>You need:</b> ${esc(d.need)}</p></header>`;
   if(d.note)h+=`<p class="drill-note">${esc(d.note)}</p>`;
   h+=`<section class="block"><h2>How to do it</h2><ol class="steps prose">${d.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></section>`;
   h+=`<section class="block"><h2>Coaching cues</h2><ul class="cues prose">${d.cues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`;
@@ -804,7 +854,7 @@ function renderProgram(){
   h+=`<section class="block"><h2>How it works</h2><ul class="cues prose">${SPEED_RULES.map(r=>`<li>${esc(r)}</li>`).join('')}</ul></section>`;
   P.weeks.forEach((w,wi)=>{
     h+=`<section class="block"><h2>Week ${wi+1}</h2>${w.map((x,si)=>{const key='w'+(wi+1)+'s'+(si+1),d=done[key];
-      return `<div class="card prog-sess${d?' done':''}"><p class="eyebrow">${esc(x.name)}${d?`<span class="tag focus">Done ${esc(fmtDate(d,{month:'short',day:'numeric'}))}</span>`:''}</p><h3>${esc(x.focus)}</h3><ul class="prog-list">${x.items.map(([id,dose])=>`<li><button class="link" data-a="drill" data-id="${id}">${esc(DRILL[id].name)}</button> <span class="sub">${esc(dose)}</span></li>`).join('')}</ul></div>`;}).join('')}</section>`;
+      return `<div class="card prog-sess${d?' done':''}"><p class="eyebrow">${esc(x.name)}${d?`<span class="tag pick">Done ${esc(fmtDate(d,{month:'short',day:'numeric'}))}</span>`:''}</p><h3>${esc(x.focus)}</h3><ul class="prog-list">${x.items.map(([id,dose])=>`<li><button class="link" data-a="drill" data-id="${id}">${esc(DRILL[id].name)}</button> <span class="sub">${esc(dose)}</span></li>`).join('')}</ul></div>`;}).join('')}</section>`;
   });
   if(S.canWrite&&fits){
     if(!active)h+=`<div class="savebar"><button class="btn primary wide" data-a="progBegin" data-id="${P.id}">Start the program for ${esc(S.profile.name||'him')}</button></div>`;

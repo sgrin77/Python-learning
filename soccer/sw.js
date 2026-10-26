@@ -2,7 +2,7 @@
 // a field with no signal) and checks GitHub for newer files in the
 // background. When a file has changed, it tells the open app, which reloads
 // itself so the new version shows up right away.
-const CACHE = 'ksl-v4';
+const CACHE = 'ksl-v5';
 const SHELL = [
   './',
   'index.html',
