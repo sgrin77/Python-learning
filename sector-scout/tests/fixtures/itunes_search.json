@@ -1,0 +1,4 @@
+{"resultCount": 2, "results": [
+ {"wrapperType": "track", "kind": "podcast", "collectionName": "Apartment Operators Show", "artistName": "Jane Host", "feedUrl": "https://feeds.example-pod.com/apartment-operators.xml"},
+ {"wrapperType": "track", "kind": "podcast", "collectionName": "No Feed Show", "artistName": "Nobody"}
+]}
