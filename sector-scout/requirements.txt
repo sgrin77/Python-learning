@@ -1,0 +1,10 @@
+anthropic>=2.3.0
+feedparser>=6.0.11
+trafilatura>=2.0.0
+googlenewsdecoder>=0.2.2
+requests>=2.32
+pydantic>=2.9
+PyYAML>=6.0
+
+# Optional, for transcribing podcasts that publish no transcript:
+#   pip install faster-whisper

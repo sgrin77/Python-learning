@@ -8,3 +8,9 @@ full implementation.
 `soccer/` holds **Keeper & Striker Log**, an installable phone app for
 tracking games, mistakes, and drills for a goalkeeper and striker. See
 [soccer/README.md](soccer/README.md) for setup and iPhone install steps.
+
+## Sector Scout
+
+`sector-scout/` scrapes news and podcasts for the sectors you choose and uses
+Claude to distill a weekly digest of best practices, with citations. See
+[sector-scout/README.md](sector-scout/README.md).

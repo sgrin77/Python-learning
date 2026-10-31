@@ -1,0 +1,143 @@
+# Sector Scout configuration.
+#
+# Each sector gets its own section in the digest. Add, remove, or edit sectors
+# freely: the keys under `sectors:` are short ids you can pass to
+# `python -m sector_scout run --sectors real_estate,ai_operations`.
+#
+# Per sector:
+#   name                 Display name in the digest.
+#   focus                One or two sentences telling Claude who the advice is
+#                        for. The sharper this is, the better the practices.
+#   news_queries         Search phrases sent to the news providers below.
+#   rss_feeds            Optional direct RSS/Atom feed URLs (trade publications,
+#                        blogs, newsletters). These give the best full text.
+#   podcast_search_terms Phrases used to discover podcasts (Apple Podcasts
+#                        directory). The top shows per term are followed.
+#   podcast_feeds        Optional podcast RSS feed URLs you always want included.
+
+settings:
+  lookback_days: 7               # only items published in the last N days
+  news_providers: [google, bing] # google = Google News RSS, bing = Bing News RSS
+  max_news_per_query: 6          # newest N results per query per provider
+  max_items_per_feed: 5          # newest N items per direct RSS feed
+  max_podcasts_per_term: 3       # shows followed per podcast search term
+  max_episodes_per_podcast: 2    # newest N episodes per show
+  max_items_per_sector: 40       # hard cap on items analyzed per sector
+  fetch_full_text: true          # download article pages for full text
+  min_text_chars: 300            # items with less text than this are listed but not analyzed
+  max_chars_per_item: 120000     # longer texts are clipped (logged, and flagged in the digest)
+  request_delay_seconds: 1.0     # politeness delay between requests to the same host
+  respect_robots_txt: true
+  language: en
+  country: US
+
+  # Claude settings. Both steps default to Claude Opus 5.5.
+  # Extraction runs once per article/episode and is most of the cost. To cut
+  # that cost by roughly 40x, set extract_model to claude-haiku-5-5.
+  extract_model: claude-opus-5-5
+  extract_effort: low            # low | medium | high | xhigh | max
+  synthesize_model: claude-opus-5-5
+  synthesize_effort: high
+  max_workers: 4                 # parallel Claude calls / page downloads
+
+  # Optional: transcribe podcast audio when an episode has no published
+  # transcript. Needs `pip install faster-whisper` and a lot of CPU time.
+  transcribe_audio: false
+  whisper_model: base
+  max_audio_minutes: 60
+
+  output_dir: digests
+  db_path: data/sector_scout.db
+
+sectors:
+  real_estate:
+    name: Real Estate & Multifamily
+    focus: >
+      Owners, operators and investors in apartments and other income property:
+      acquisitions, asset and property management, leasing, renovations,
+      financing and investor relations.
+    news_queries:
+      - multifamily operations best practices
+      - property management lessons
+      - apartment investing strategy
+    rss_feeds: []
+    podcast_search_terms:
+      - multifamily investing
+      - property management
+    podcast_feeds: []
+
+  ai_operations:
+    name: AI & Automation in Business
+    focus: >
+      Leaders putting AI models and agents to work inside a company: workflows,
+      shared knowledge bases, internal tools, governance, measuring ROI, and
+      bringing teams along.
+    news_queries:
+      - AI agents business operations case study
+      - company AI adoption lessons learned
+      - generative AI workflow automation results
+    rss_feeds: []
+    podcast_search_terms:
+      - AI in business
+      - AI agents
+    podcast_feeds: []
+
+  startups_saas:
+    name: Startups & SaaS
+    focus: >
+      Founders and operators of software companies: go-to-market, pricing,
+      retention, hiring, fundraising and running lean teams.
+    news_queries:
+      - SaaS pricing strategy
+      - startup go-to-market lessons
+      - customer retention best practices B2B
+    rss_feeds: []
+    podcast_search_terms:
+      - SaaS growth
+      - startup founders
+    podcast_feeds: []
+
+  healthcare:
+    name: Healthcare Operations
+    focus: >
+      People running clinics, practices and health systems: patient experience,
+      staffing, scheduling, revenue cycle and adopting new technology.
+    news_queries:
+      - healthcare operations best practices
+      - patient experience improvement hospital
+      - revenue cycle management lessons
+    rss_feeds: []
+    podcast_search_terms:
+      - healthcare leadership
+      - healthcare operations
+    podcast_feeds: []
+
+  finance_investing:
+    name: Finance & Private Markets
+    focus: >
+      Investors and finance leaders: capital allocation, private equity value
+      creation, underwriting discipline, risk management and reporting to LPs.
+    news_queries:
+      - private equity value creation
+      - capital allocation lessons
+      - underwriting discipline investors
+    rss_feeds: []
+    podcast_search_terms:
+      - private equity
+      - capital allocation
+    podcast_feeds: []
+
+  construction_development:
+    name: Construction & Development
+    focus: >
+      Developers, general contractors and owners' reps: preconstruction,
+      cost control, scheduling, entitlements, risk transfer and site safety.
+    news_queries:
+      - construction project management best practices
+      - real estate development lessons learned
+      - construction cost control
+    rss_feeds: []
+    podcast_search_terms:
+      - construction industry
+      - real estate development
+    podcast_feeds: []

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0" xmlns:News="https://www.bing.com:443/news/search?q=multifamily&amp;format=rss">
+<channel>
+<title>multifamily - BingNews</title>
+<link>https://www.bing.com:443/news/search?q=multifamily&amp;format=rss</link>
+<description>Search results</description>
+<item>
+<title>Why rent rolls lie: walk every unit before closing</title>
+<link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=ABC&amp;url=https%3a%2f%2fwww.example-news.com%2f2026%2f10%2fwalk-every-unit%3futm_source%3dbing&amp;c=123&amp;mkt=en-us</link>
+<description>Due diligence lessons from a Dallas apartment buyer who found occupancy far below the rent roll.</description>
+<pubDate>Fri, 30 Oct 2026 16:30:00 GMT</pubDate>
+<News:Source>Example News</News:Source>
+</item>
+<item>
+<title>How one operator cut turn times in half</title>
+<link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;url=https%3a%2f%2fwww.multifamilydive.com%2fnews%2fturn-times&amp;c=9</link>
+<description>Same story as Google found.</description>
+<pubDate>Wed, 28 Oct 2026 14:05:00 GMT</pubDate>
+<News:Source>Multifamily Dive</News:Source>
+</item>
+</channel>
+</rss>

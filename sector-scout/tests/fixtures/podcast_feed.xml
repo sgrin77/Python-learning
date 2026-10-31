@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<title>Apartment Operators Show</title>
+<link>https://example-pod.com</link>
+<item>
+<title>Ep 88: Resident retention playbook</title>
+<guid isPermaLink="false">ep-88</guid>
+<link>https://example-pod.com</link>
+<pubDate>Thu, 29 Oct 2026 08:00:00 GMT</pubDate>
+<description>We talk renewals.</description>
+<content:encoded><![CDATA[<p>We talk renewals with a 9,000 unit operator.</p><ul><li>Renewal offers at 120 days</li><li>Maintenance speed</li></ul>]]></content:encoded>
+<enclosure url="https://cdn.example-pod.com/ep88.mp3" type="audio/mpeg" length="12345"/>
+<podcast:transcript url="https://cdn.example-pod.com/ep88.html" type="text/html"/>
+<podcast:transcript url="https://cdn.example-pod.com/ep88.vtt" type="text/vtt"/>
+</item>
+<item>
+<title>Ep 87: Show notes only episode</title>
+<guid isPermaLink="false">ep-87</guid>
+<link>https://example-pod.com</link>
+<pubDate>Mon, 26 Oct 2026 08:00:00 GMT</pubDate>
+<content:encoded><![CDATA[<p>In this episode our guest explains how they standardized make-ready scopes across 40 properties. They recommend a fixed checklist for every turn, photo documentation before and after, and scheduling vendors the day notice is given rather than the day the resident moves out. The key is to start the turn process on notice day. They also share mistakes to avoid when bidding paint and flooring contracts across a portfolio.</p>]]></content:encoded>
+<enclosure url="https://cdn.example-pod.com/ep87.mp3" type="audio/mpeg" length="12345"/>
+</item>
+<item>
+<title>Ep 70: Too old</title>
+<guid isPermaLink="false">ep-70</guid>
+<pubDate>Mon, 01 Jun 2026 08:00:00 GMT</pubDate>
+<description>old</description>
+<enclosure url="https://cdn.example-pod.com/ep70.mp3" type="audio/mpeg" length="1"/>
+</item>
+</channel>
+</rss>
